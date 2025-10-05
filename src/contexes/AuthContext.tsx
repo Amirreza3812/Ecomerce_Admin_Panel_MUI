@@ -1,27 +1,30 @@
 import React, { createContext, useContext, useState } from "react";
 
-type User = {
+type Admin = {
   id: number;
   name: string;
   email: string;
   phone?: string;
   role: string;
   status: string;
-  avatar?: string;
-  createdAt: string;
-  updatedAt: string;
+  avatar?: string | null;
+  lastLogin?: string;
+  createdAt?: string;
+  updatedAt?: string;
 };
 
 type AuthContextType = {
-  user: User | null;
+  admin: Admin | null;
   token: string | null;
-  login: (token: string, user: User) => void;
+  loading: boolean;
+  login: (token: string, admin: Admin) => void;
   logout: () => void;
 };
 
 const AuthContext = createContext<AuthContextType>({
-  user: null,
+  admin: null,
   token: null,
+  loading: true,
   login: () => {},
   logout: () => {},
 });
@@ -29,35 +32,43 @@ const AuthContext = createContext<AuthContextType>({
 export const useAuth = () => useContext(AuthContext);
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-  const [user, setUser] = useState<User | null>(null);
+  const [admin, setAdmin] = useState<Admin | null>(null);
   const [token, setToken] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  const login = (jwt: string, userObj: User) => {
+  const login = (jwt: string, adminObj: Admin) => {
     setToken(jwt);
-    setUser(userObj);
+    setAdmin(adminObj);
     localStorage.setItem("token", jwt);
-    localStorage.setItem("user", JSON.stringify(userObj));
+    if (adminObj) {
+      localStorage.setItem("admin", JSON.stringify(adminObj));
+    } else {
+      localStorage.removeItem("admin");
+    }
   };
 
   const logout = () => {
     setToken(null);
-    setUser(null);
+    setAdmin(null);
     localStorage.removeItem("token");
-    localStorage.removeItem("user");
+    localStorage.removeItem("admin");
   };
 
-  // بازیابی اطلاعات از localStorage (مثلاً بعد از refresh)
   React.useEffect(() => {
     const jwt = localStorage.getItem("token");
-    const usr = localStorage.getItem("user");
-    if (jwt && usr) {
+    const adm = localStorage.getItem("admin");
+    if (jwt && adm && adm !== "undefined") {
       setToken(jwt);
-      setUser(JSON.parse(usr));
+      setAdmin(JSON.parse(adm));
+    } else {
+      setToken(null);
+      setAdmin(null);
     }
+    setLoading(false);
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, token, login, logout }}>
+    <AuthContext.Provider value={{ admin, token, loading, login, logout }}>
       {children}
     </AuthContext.Provider>
   );

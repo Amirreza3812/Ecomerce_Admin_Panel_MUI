@@ -18,12 +18,13 @@ import { useForm, Controller } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
 import { useMutation } from "@tanstack/react-query";
-import { useAuth } from "../../contexes/AuthContext";
+import { useAuth } from "../../contexes/AuthContext.tsx";
 import { useNavigate } from "react-router-dom";
-// import ForgotPassword from "./components/ForgotPassword"; // موقتا کامنت شد
-import AppTheme from "../shared-theme/AppTheme";
-import ColorModeSelect from "../shared-theme/ColorModeSelect";
-import { GoogleIcon } from "./components/CustomIcons";
+import ForgotPassword from "./components/ForgotPassword.tsx";
+import AppTheme from "../shared-theme/AppTheme.tsx";
+import ColorModeSelect from "../shared-theme/ColorModeSelect.tsx";
+// import { GoogleIcon } from "./components/CustomIcons.tsx";
+import React from "react";
 
 const Card = styled(MuiCard)(({ theme }) => ({
   display: "flex",
@@ -79,7 +80,7 @@ type SignInForm = {
 };
 
 export default function SignIn(props: { disableCustomTheme?: boolean }) {
-  // const [open, setOpen] = React.useState(false); // برای ForgotPassword
+  const [open, setOpen] = React.useState(false); // برای ForgotPassword
 
   const { login } = useAuth();
   const navigate = useNavigate();
@@ -98,7 +99,7 @@ export default function SignIn(props: { disableCustomTheme?: boolean }) {
   // react-query mutation برای لاگین
   const mutation = useMutation({
     mutationFn: async (data: SignInForm) => {
-      const res = await fetch("http://localhost:3000/api/v1/auth/login", {
+      const res = await fetch("http://localhost:3000/api/v1/admin/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: data.email, password: data.password }),
@@ -110,7 +111,7 @@ export default function SignIn(props: { disableCustomTheme?: boolean }) {
       return json.data;
     },
     onSuccess: (data) => {
-      login(data.token, data.user);
+      login(data.token, data.admin);
       navigate("/dashboard"); // ریدایرکت به داشبورد
     },
     onError: (error: any) => {
@@ -123,8 +124,8 @@ export default function SignIn(props: { disableCustomTheme?: boolean }) {
     mutation.mutate(data);
   };
 
-  // const handleClickOpen = () => setOpen(true);
-  // const handleClose = () => setOpen(false);
+  const handleClickOpen = () => setOpen(true);
+  const handleClose = () => setOpen(false);
 
   return (
     <AppTheme {...props}>
@@ -214,7 +215,7 @@ export default function SignIn(props: { disableCustomTheme?: boolean }) {
                 />
               )}
             />
-            {/* <ForgotPassword open={open} handleClose={handleClose} /> */}
+            <ForgotPassword open={open} handleClose={handleClose} />
             <Button
               type="submit"
               fullWidth
@@ -223,7 +224,7 @@ export default function SignIn(props: { disableCustomTheme?: boolean }) {
             >
               {mutation.isLoading ? "در حال ورود..." : "ورود"}
             </Button>
-            {/* <Link
+            <Link
               component="button"
               type="button"
               onClick={handleClickOpen}
@@ -231,9 +232,9 @@ export default function SignIn(props: { disableCustomTheme?: boolean }) {
               sx={{ alignSelf: "center" }}
             >
               رمز عبور را فراموش کرده‌اید؟
-            </Link> */}
+            </Link>
           </Box>
-          <Divider>یا</Divider>
+          {/* <Divider>یا</Divider>
           <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
             <Button
               fullWidth
@@ -243,13 +244,13 @@ export default function SignIn(props: { disableCustomTheme?: boolean }) {
             >
               ورود با گوگل
             </Button>
-            {/* <Typography sx={{ textAlign: "center" }}>
+            <Typography sx={{ textAlign: "center" }}>
               حساب ندارید؟{" "}
               <Link href="/signup" variant="body2" sx={{ alignSelf: "center" }}>
                 ثبت‌نام
               </Link>
-            </Typography> */}
-          </Box>
+            </Typography>
+          </Box> */}
         </Card>
       </SignInContainer>
     </AppTheme>

@@ -2,13 +2,15 @@ import { styled } from "@mui/material/styles";
 import Avatar from "@mui/material/Avatar";
 import MuiDrawer, { drawerClasses } from "@mui/material/Drawer";
 import Box from "@mui/material/Box";
-import Divider from "@mui/material/Divider";
+// import Divider from "@mui/material/Divider";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
-import SelectContent from "./SelectContent.tsx";
+// import SelectContent from "./SelectContent.tsx";
 import MenuContent from "./MenuContent.tsx";
 import CardAlert from "./CardAlert.tsx";
 import OptionsMenu from "./OptionsMenu.tsx";
+import { useAuth } from "../../../contexes/AuthContext.tsx";
+import { useQuery } from "@tanstack/react-query";
 
 const drawerWidth = 240;
 
@@ -24,6 +26,41 @@ const Drawer = styled(MuiDrawer)({
 });
 
 export default function SideMenu() {
+  const { token } = useAuth();
+
+  const { data, isLoading, isError } = useQuery({
+    queryKey: ["adminMe"],
+    queryFn: async () => {
+      const res = await fetch("http://localhost:3000/api/v1/admin/auth/me", {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      if (!res.ok) throw new Error("Failed to fetch admin info");
+      const json = await res.json();
+      return json.data as {
+        name: string;
+        email: string;
+        avatar: string | null;
+      };
+    },
+    enabled: !!token,
+  });
+
+  const adminName = isLoading
+    ? "در حال بارگذاری..."
+    : isError
+    ? "خطا در دریافت نام"
+    : data?.name || "ادمین";
+
+  const adminEmail = isLoading ? "" : isError ? "" : data?.email || "";
+
+  const adminAvatar =
+    isLoading || isError
+      ? "/static/images/avatar/7.jpg" // آواتار پیش‌فرض
+      : data?.avatar || "/static/images/avatar/7.jpg";
+
   return (
     <Drawer
       variant="permanent"
@@ -34,7 +71,7 @@ export default function SideMenu() {
         },
       }}
     >
-      <Box
+      {/* <Box
         sx={{
           display: "flex",
           mt: "calc(var(--template-frame-height, 0px) + 4px)",
@@ -42,8 +79,8 @@ export default function SideMenu() {
         }}
       >
         <SelectContent />
-      </Box>
-      <Divider />
+      </Box> */}
+      {/* <Divider /> */}
       <Box
         sx={{
           overflow: "auto",
@@ -67,8 +104,8 @@ export default function SideMenu() {
       >
         <Avatar
           sizes="small"
-          alt="Riley Carter"
-          src="/static/images/avatar/7.jpg"
+          alt={adminName}
+          src={adminAvatar}
           sx={{ width: 36, height: 36 }}
         />
         <Box sx={{ mr: "auto" }}>
@@ -76,10 +113,10 @@ export default function SideMenu() {
             variant="body2"
             sx={{ fontWeight: 500, lineHeight: "16px" }}
           >
-            Riley Carter
+            {adminName}
           </Typography>
           <Typography variant="caption" sx={{ color: "text.secondary" }}>
-            riley@email.com
+            {adminEmail}
           </Typography>
         </Box>
         <OptionsMenu />

@@ -1,12 +1,12 @@
 import { Navigate, Outlet } from "react-router-dom";
-import { useAuth } from "../contexes/AuthContext";
+import { useAuth } from "../contexes/AuthContext.tsx";
 
-// این کامپوننت فقط وقتی کاربر لاگین است بچه‌هاش رو نشون میده
 export default function ProtectedRoute() {
-  const { token } = useAuth();
+  const { token, loading } = useAuth();
+
+  if (loading) return null; // یا یک Spinner
 
   if (!token) {
-    // اگر توکن نداره، به صفحه ساین این برگرده
     return <Navigate to="/" replace />;
   }
 

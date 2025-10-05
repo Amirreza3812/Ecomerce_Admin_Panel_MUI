@@ -1,10 +1,10 @@
-import React from "react";
 import { Navigate } from "react-router-dom";
-import { useAuth } from "../contexes/AuthContext";
+import { useAuth } from "../contexes/AuthContext.tsx";
 
-// اگر لاگین است و توکن دارد، اجازه ورود به ساین این نمی‌دهد و به داشبورد می‌فرستد
 export default function RedirectIfAuth({ children }: { children: React.ReactNode }) {
-  const { token } = useAuth();
+  const { token, loading } = useAuth();
+
+  if (loading) return null; // یا spinner
 
   if (token) {
     return <Navigate to="/dashboard" replace />;

@@ -2,7 +2,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AuthProvider } from "./contexes/AuthContext";
 import SignIn from "./Pages/Sign_in/SignIn.tsx";
-import Dashboard from "./Pages/Dashboard/Dashboard.tsx";
+import Dashboard from "./Pages/Dashboard/DashboardLayout.tsx";
 import ProtectedRoute from "./routes/ProtectedRoute.tsx";
 import RedirectIfAuth from "./routes/RedirectIfAuth.tsx";
 
