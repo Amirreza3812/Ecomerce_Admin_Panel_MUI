@@ -1,4 +1,3 @@
-import React from "react";
 import {
   Box,
   Button,
@@ -19,7 +18,7 @@ import { useForm, Controller } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
 import { useMutation } from "@tanstack/react-query";
-import { useAuth } from "../../contexes/AuthContext.tsx";
+import { useAuth } from "../../contexes/AuthContext";
 import { useNavigate } from "react-router-dom";
 // import ForgotPassword from "./components/ForgotPassword"; // موقتا کامنت شد
 import AppTheme from "../shared-theme/AppTheme";
@@ -121,7 +120,7 @@ export default function SignIn(props: { disableCustomTheme?: boolean }) {
 
   const onSubmit = (data: SignInForm) => {
     clearErrors();
-    mutation.mutate(data); 
+    mutation.mutate(data);
   };
 
   // const handleClickOpen = () => setOpen(true);

@@ -9,8 +9,8 @@ import ListItemText from "@mui/material/ListItemText";
 import ListItemIcon, { listItemIconClasses } from "@mui/material/ListItemIcon";
 import LogoutRoundedIcon from "@mui/icons-material/LogoutRounded";
 import MoreVertRoundedIcon from "@mui/icons-material/MoreVertRounded";
-import MenuButton from "./MenuButton";
-import { useAuth } from "../../../contexes/AuthContext.tsx"; // مسیر درست
+import MenuButton from "./MenuButton.tsx";
+import { useAuth } from "../../../contexes/AuthContext.tsx";
 import { useNavigate } from "react-router-dom";
 
 const MenuItem = styled(MuiMenuItem)({
