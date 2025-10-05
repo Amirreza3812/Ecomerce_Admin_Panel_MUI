@@ -66,7 +66,7 @@ export default function OptionsMenu() {
         <MenuItem onClick={handleClose}>Settings</MenuItem> */}
         <Divider />
         <MenuItem
-          onClick={handleLogout} 
+          onClick={handleLogout}
           sx={{
             [`& .${listItemIconClasses.root}`]: {
               ml: "auto",

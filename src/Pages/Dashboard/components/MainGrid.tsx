@@ -2,7 +2,7 @@ import Grid from "@mui/material/Grid";
 import Box from "@mui/material/Box";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
-import Copyright from "../internals/components/Copyright.tsx";
+// import Copyright from "../internals/components/Copyright.tsx";
 import ChartUserByCountry from "./ChartUserByCountry.tsx";
 import CustomizedTreeView from "./CustomizedTreeView.tsx";
 import CustomizedDataGrid from "./CustomizedDataGrid.tsx";
@@ -88,7 +88,7 @@ export default function MainGrid() {
           </Stack>
         </Grid>
       </Grid>
-      <Copyright sx={{ my: 4 }} />
+      {/* <Copyright sx={{ my: 4 }} /> */}
     </Box>
   );
 }
