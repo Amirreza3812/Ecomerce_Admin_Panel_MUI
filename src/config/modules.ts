@@ -15,4 +15,5 @@ export const modulesConfig = {
   about: true,
   feedback: true,
   subcategories: true,
+  myAccount: true,
 };

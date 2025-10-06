@@ -1,22 +1,28 @@
 import React, { createContext, useContext } from "react";
 import { useQuery } from "@tanstack/react-query";
 
-// --- CHANGE 1: Import your local config ---
 import { modulesConfig } from "../config/modules";
 
 type Modules = {
-  orders: true;
-  categories: true;
-  products: true;
-  banking: true;
-  personnel: true;
-  // ... other modules
+  orders: boolean;
+  categories: boolean;
+  products: boolean;
+  banking: boolean;
+  personnel: boolean;
+  prices: boolean;
+  customers: boolean;
+  comments: boolean;
+  settings: boolean;
+  about: boolean;
+  feedback: boolean;
+  subcategories: boolean;
+  myAccount: boolean;
 };
 
 type ModuleContextType = {
   modules: Modules | undefined;
-  isLoading: true;
-  isError: true;
+  isLoading: boolean;
+  isError: boolean;
 };
 
 const ModuleContext = createContext<ModuleContextType>({

@@ -1,3 +1,5 @@
+// src/Pages/Dashboard/components/OptionsMenu.tsx
+
 import * as React from "react";
 import { styled } from "@mui/material/styles";
 import Divider, { dividerClasses } from "@mui/material/Divider";
@@ -36,6 +38,12 @@ export default function OptionsMenu() {
     navigate("/", { replace: true });
   };
 
+  // --- NEW HANDLER FUNCTION ---
+  const handleMyAccountClick = () => {
+    handleClose();
+    navigate("/dashboard/myAccount");
+  };
+
   return (
     <>
       <MenuButton
@@ -50,7 +58,6 @@ export default function OptionsMenu() {
         id="menu"
         open={open}
         onClose={handleClose}
-        // حذف onClick={handleClose}
         transformOrigin={{ horizontal: "right", vertical: "top" }}
         anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
         sx={{
@@ -59,11 +66,8 @@ export default function OptionsMenu() {
           [`& .${dividerClasses.root}`]: { margin: "4px -4px" },
         }}
       >
-        {/* <MenuItem onClick={handleClose}>Profile</MenuItem> */}
-        <MenuItem onClick={handleClose}>My account</MenuItem>
-        {/* <Divider /> */}
-        {/* <MenuItem onClick={handleClose}>Add another account</MenuItem>
-        <MenuItem onClick={handleClose}>Settings</MenuItem> */}
+        {/* --- CHANGE: Add the onClick handler --- */}
+        <MenuItem onClick={handleMyAccountClick}>My account</MenuItem>
         <Divider />
         <MenuItem
           onClick={handleLogout}

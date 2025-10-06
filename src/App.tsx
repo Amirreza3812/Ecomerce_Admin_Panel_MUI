@@ -20,6 +20,7 @@ import About from "./Pages/About/About.tsx";
 import Feedback from "./Pages/Feedback/Feedback.tsx";
 import MainGrid from "./Pages/Dashboard/components/MainGrid.tsx";
 import SubCategories from "./Pages/SubCategories/SubCategories.tsx";
+import MyAccount from "./Pages/MyAccount/MyAccount.tsx";
 
 const DashboardIndex = () => <MainGrid />;
 const queryClient = new QueryClient();
@@ -74,6 +75,9 @@ function AppRoutes() {
           {modules?.subcategories && (
             <Route path="subcategories" element={<SubCategories />} />
           )}
+          {modules?.myAccount && (
+            <Route path="myAccount" element={<MyAccount />} />
+          )}
         </Route>
       </Route>
     </Routes>
@@ -86,7 +90,7 @@ function App() {
       <AuthProvider>
         <ModuleProvider>
           <BrowserRouter>
-            <AppRoutes /> 
+            <AppRoutes />
           </BrowserRouter>
         </ModuleProvider>
       </AuthProvider>
