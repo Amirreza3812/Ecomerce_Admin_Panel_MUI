@@ -1,25 +1,27 @@
-import { useTheme } from '@mui/material/styles';
-import Box from '@mui/material/Box';
-import Card from '@mui/material/Card';
-import CardContent from '@mui/material/CardContent';
-import Chip from '@mui/material/Chip';
-import Stack from '@mui/material/Stack';
-import Typography from '@mui/material/Typography';
-import { SparkLineChart } from '@mui/x-charts/SparkLineChart';
-import { areaElementClasses } from '@mui/x-charts/LineChart';
+// src/Pages/Dashboard/components/StatCard.tsx
+import { useTheme } from "@mui/material/styles";
+import Box from "@mui/material/Box";
+import Card from "@mui/material/Card";
+import CardContent from "@mui/material/CardContent";
+import Chip from "@mui/material/Chip";
+import Stack from "@mui/material/Stack";
+import Typography from "@mui/material/Typography";
+import { SparkLineChart } from "@mui/x-charts/SparkLineChart";
+import { areaElementClasses } from "@mui/x-charts/LineChart";
 
 export type StatCardProps = {
   title: string;
   value: string;
   interval: string;
-  trend: 'up' | 'down' | 'neutral';
+  trend: "up" | "down" | "neutral";
   data: number[];
+  change?: number; // Add change percentage
 };
 
 function getDaysInMonth(month: number, year: number) {
   const date = new Date(year, month, 0);
-  const monthName = date.toLocaleDateString('en-US', {
-    month: 'short',
+  const monthName = date.toLocaleDateString("en-US", {
+    month: "short",
   });
   const daysInMonth = date.getDate();
   const days = [];
@@ -48,69 +50,78 @@ export default function StatCard({
   interval,
   trend,
   data,
+  change, // Add change percentage
 }: StatCardProps) {
   const theme = useTheme();
   const daysInWeek = getDaysInMonth(4, 2024);
 
   const trendColors = {
     up:
-      theme.palette.mode === 'light'
+      theme.palette.mode === "light"
         ? theme.palette.success.main
         : theme.palette.success.dark,
     down:
-      theme.palette.mode === 'light'
+      theme.palette.mode === "light"
         ? theme.palette.error.main
         : theme.palette.error.dark,
     neutral:
-      theme.palette.mode === 'light'
+      theme.palette.mode === "light"
         ? theme.palette.grey[400]
         : theme.palette.grey[700],
   };
 
   const labelColors = {
-    up: 'success' as const,
-    down: 'error' as const,
-    neutral: 'default' as const,
+    up: "success" as const,
+    down: "error" as const,
+    neutral: "default" as const,
   };
 
   const color = labelColors[trend];
   const chartColor = trendColors[trend];
-  const trendValues = { up: '+25%', down: '-25%', neutral: '+5%' };
+  // Use the change percentage if provided, otherwise use default values
+  const trendValue =
+    change !== undefined
+      ? `${change > 0 ? "+" : ""}${change}%`
+      : trend === "up"
+      ? "+25%"
+      : trend === "down"
+      ? "-25%"
+      : "+5%";
 
   return (
-    <Card variant="outlined" sx={{ height: '100%', flexGrow: 1 }}>
+    <Card variant="outlined" sx={{ height: "100%", flexGrow: 1 }}>
       <CardContent>
         <Typography component="h2" variant="subtitle2" gutterBottom>
           {title}
         </Typography>
         <Stack
           direction="column"
-          sx={{ justifyContent: 'space-between', flexGrow: '1', gap: 1 }}
+          sx={{ justifyContent: "space-between", flexGrow: "1", gap: 1 }}
         >
-          <Stack sx={{ justifyContent: 'space-between' }}>
+          <Stack sx={{ justifyContent: "space-between" }}>
             <Stack
               direction="row"
-              sx={{ justifyContent: 'space-between', alignItems: 'center' }}
+              sx={{ justifyContent: "space-between", alignItems: "center" }}
             >
               <Typography variant="h4" component="p">
                 {value}
               </Typography>
-              <Chip size="small" color={color} label={trendValues[trend]} />
+              <Chip size="small" color={color} label={trendValue} />
             </Stack>
-            <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+            <Typography variant="caption" sx={{ color: "text.secondary" }}>
               {interval}
             </Typography>
           </Stack>
-          <Box sx={{ width: '100%', height: 50 }}>
+          <Box sx={{ width: "100%", height: 50 }}>
             <SparkLineChart
               color={chartColor}
-              data={data}
+              data={data.length > 0 ? data : [0, 0, 0, 0, 0]} // Use empty data if not provided
               area
               showHighlight
               showTooltip
               xAxis={{
-                scaleType: 'band',
-                data: daysInWeek, // Use the correct property 'data' for xAxis
+                scaleType: "band",
+                data: daysInWeek,
               }}
               sx={{
                 [`& .${areaElementClasses.root}`]: {

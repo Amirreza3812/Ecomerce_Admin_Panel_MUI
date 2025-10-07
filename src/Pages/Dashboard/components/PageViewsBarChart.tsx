@@ -1,40 +1,100 @@
-import Card from '@mui/material/Card';
-import CardContent from '@mui/material/CardContent';
-import Chip from '@mui/material/Chip';
-import Typography from '@mui/material/Typography';
-import Stack from '@mui/material/Stack';
-import { BarChart } from '@mui/x-charts/BarChart';
-import { useTheme } from '@mui/material/styles';
+// src/Pages/Dashboard/components/PageViewsBarChart.tsx
+import Card from "@mui/material/Card";
+import CardContent from "@mui/material/CardContent";
+import Chip from "@mui/material/Chip";
+import Typography from "@mui/material/Typography";
+import Stack from "@mui/material/Stack";
+import { BarChart } from "@mui/x-charts/BarChart";
+import { useTheme } from "@mui/material/styles";
+import { useQuery } from "@tanstack/react-query";
+import { CircularProgress, Box, Alert } from "@mui/material";
+import { getSalesChart } from "../../../services/dashboardService";
 
 export default function PageViewsBarChart() {
   const theme = useTheme();
+
+  const {
+    data: salesData,
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: ["salesChart"],
+    queryFn: () => getSalesChart("month"),
+  });
+
+  if (isLoading) {
+    return (
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          height: "100%",
+          minHeight: 400,
+        }}
+      >
+        <CircularProgress />
+      </Box>
+    );
+  }
+
+  if (error) {
+    return (
+      <Alert severity="error" sx={{ m: 2 }}>
+        Error loading sales data: {error.message}
+      </Alert>
+    );
+  }
+
   const colorPalette = [
     (theme.vars || theme).palette.primary.dark,
     (theme.vars || theme).palette.primary.main,
     (theme.vars || theme).palette.primary.light,
   ];
+
+  // Get the chart data from the API response
+  const chartData = salesData?.chartData || [];
+
+  // Calculate totals for the header
+  const totalOrders = chartData.reduce((sum, item) => sum + item.orders, 0);
+  const totalRevenue = chartData.reduce((sum, item) => sum + item.revenue, 0);
+
+  // Use the revenueChange from the backend response
+  const revenueChange = salesData?.revenueChange || 0;
+
+  // Extract just the period labels for the x-axis
+  const periods = chartData.map((item) => {
+    // Format date to a shorter format like "Jan 1" or just "Jan"
+    const date = new Date(item.period);
+    return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  });
+
   return (
-    <Card variant="outlined" sx={{ width: '100%' }}>
+    <Card variant="outlined" sx={{ width: "100%" }}>
       <CardContent>
         <Typography component="h2" variant="subtitle2" gutterBottom>
-          Page views and downloads
+          Sales Performance
         </Typography>
-        <Stack sx={{ justifyContent: 'space-between' }}>
+        <Stack sx={{ justifyContent: "space-between" }}>
           <Stack
             direction="row"
             sx={{
-              alignContent: { xs: 'center', sm: 'flex-start' },
-              alignItems: 'center',
+              alignContent: { xs: "center", sm: "flex-start" },
+              alignItems: "center",
               gap: 1,
             }}
           >
             <Typography variant="h4" component="p">
-              1.3M
+              ${totalRevenue.toFixed(0)}
             </Typography>
-            <Chip size="small" color="error" label="-8%" />
+            <Chip
+              size="small"
+              color={revenueChange > 0 ? "success" : "error"}
+              label={`${revenueChange > 0 ? "+" : ""}${revenueChange}%`}
+            />
           </Stack>
-          <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-            Page views and downloads for the last 6 months
+          <Typography variant="caption" sx={{ color: "text.secondary" }}>
+            Orders and revenue for the last {chartData.length} days
           </Typography>
         </Stack>
         <BarChart
@@ -42,31 +102,25 @@ export default function PageViewsBarChart() {
           colors={colorPalette}
           xAxis={[
             {
-              scaleType: 'band',
+              scaleType: "band",
               categoryGapRatio: 0.5,
-              data: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'],
+              data: periods,
               height: 24,
             },
           ]}
           yAxis={[{ width: 50 }]}
           series={[
             {
-              id: 'page-views',
-              label: 'Page views',
-              data: [2234, 3872, 2998, 4125, 3357, 2789, 2998],
-              stack: 'A',
+              id: "orders",
+              label: "Orders",
+              data: chartData.map((item) => item.orders),
+              stack: "A",
             },
             {
-              id: 'downloads',
-              label: 'Downloads',
-              data: [3098, 4215, 2384, 2101, 4752, 3593, 2384],
-              stack: 'A',
-            },
-            {
-              id: 'conversions',
-              label: 'Conversions',
-              data: [4051, 2275, 3129, 4693, 3904, 2038, 2275],
-              stack: 'A',
+              id: "revenue",
+              label: "Revenue ($)",
+              data: chartData.map((item) => item.revenue),
+              stack: "A",
             },
           ]}
           height={250}

@@ -1,52 +1,106 @@
+// src/Pages/Dashboard/components/MainGrid.tsx
 import Grid from "@mui/material/Grid";
 import Box from "@mui/material/Box";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
-// import Copyright from "../internals/components/Copyright.tsx";
-import ChartUserByCountry from "./ChartUserByCountry.tsx";
+import { useQuery } from "@tanstack/react-query";
+import CircularProgress from "@mui/material/CircularProgress";
+import Alert from "@mui/material/Alert";
+
+import TopProductsChart from "./TopProductsChart.tsx";
+import OrderStatusChart from "./OrderStatusChart.tsx";
 import CustomizedTreeView from "./CustomizedTreeView.tsx";
 import CustomizedDataGrid from "./CustomizedDataGrid.tsx";
 import HighlightedCard from "./HighlightedCard.tsx";
-import PageViewsBarChart from "./PageViewsBarChart.tsx";
 import SessionsChart from "./SessionsChart.tsx";
 import StatCard from "./StatCard.tsx";
 import type { StatCardProps } from "./StatCard.tsx";
-
-const data: StatCardProps[] = [
-  {
-    title: "Users",
-    value: "14k",
-    interval: "Last 30 days",
-    trend: "up",
-    data: [
-      200, 24, 220, 260, 240, 380, 100, 240, 280, 240, 300, 340, 320, 360, 340,
-      380, 360, 400, 380, 420, 400, 640, 340, 460, 440, 480, 460, 600, 880, 920,
-    ],
-  },
-  {
-    title: "Conversions",
-    value: "325",
-    interval: "Last 30 days",
-    trend: "down",
-    data: [
-      1640, 1250, 970, 1130, 1050, 900, 720, 1080, 900, 450, 920, 820, 840, 600,
-      820, 780, 800, 760, 380, 740, 660, 620, 840, 500, 520, 480, 400, 360, 300,
-      220,
-    ],
-  },
-  {
-    title: "Event count",
-    value: "200k",
-    interval: "Last 30 days",
-    trend: "neutral",
-    data: [
-      500, 400, 510, 530, 520, 600, 530, 520, 510, 730, 520, 510, 530, 620, 510,
-      530, 520, 410, 530, 520, 610, 530, 520, 610, 530, 420, 510, 430, 520, 510,
-    ],
-  },
-];
+import { getDashboardOverview, getRecentOrders, getSessionsData } from "../../../services/dashboardService";
 
 export default function MainGrid() {
+  const {
+    data: dashboardData,
+    isLoading: isDashboardLoading,
+    error: dashboardError,
+  } = useQuery({
+    queryKey: ["dashboardOverview"],
+    queryFn: getDashboardOverview,
+  });
+
+  const {
+    data: recentOrders = [],
+    isLoading: isOrdersLoading,
+    error: ordersError,
+  } = useQuery({
+    queryKey: ["recentOrders"],
+    queryFn: () => getRecentOrders(5), // Reduced to 5 for dashboard
+  });
+
+  const {
+    data: sessionsData,
+    isLoading: isSessionsLoading,
+    error: sessionsError,
+  } = useQuery({
+    queryKey: ["sessionsData"],
+    queryFn: () => getSessionsData('week'),
+  });
+
+  if (isDashboardLoading) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '400px' }}>
+        <CircularProgress />
+      </Box>
+    );
+  }
+
+  if (dashboardError) {
+    return (
+      <Alert severity="error" sx={{ mt: 2 }}>
+        Error loading dashboard data: {dashboardError.message}
+      </Alert>
+    );
+  }
+
+  // Transform the backend data to match the StatCardProps format
+  const statCardsData: StatCardProps[] = [
+    {
+      title: "New Customers",
+      value: dashboardData?.newCustomers.value.toString() || "0",
+      interval: "Last 30 days",
+      trend: dashboardData?.newCustomers.change > 0 ? "up" : 
+             dashboardData?.newCustomers.change < 0 ? "down" : "neutral",
+      data: [], // We'll need to add this data from the backend
+      change: dashboardData?.newCustomers.change,
+    },
+    {
+      title: "Total Orders",
+      value: dashboardData?.totalOrders.value.toString() || "0",
+      interval: "Last 30 days",
+      trend: dashboardData?.totalOrders.change > 0 ? "up" : 
+             dashboardData?.totalOrders.change < 0 ? "down" : "neutral",
+      data: [], // We'll need to add this data from the backend
+      change: dashboardData?.totalOrders.change,
+    },
+    {
+      title: "Total Revenue",
+      value: `$${dashboardData?.totalRevenue.value || 0}`,
+      interval: "Last 30 days",
+      trend: dashboardData?.totalRevenue.change > 0 ? "up" : 
+             dashboardData?.totalRevenue.change < 0 ? "down" : "neutral",
+      data: [], // We'll need to add this data from the backend
+      change: dashboardData?.totalRevenue.change,
+    },
+    {
+      title: "Active Products",
+      value: dashboardData?.activeProducts.value.toString() || "0",
+      interval: "All time",
+      trend: dashboardData?.activeProducts.change > 0 ? "up" : 
+             dashboardData?.activeProducts.change < 0 ? "down" : "neutral",
+      data: [], // We'll need to add this data from the backend
+      change: dashboardData?.activeProducts.change,
+    },
+  ];
+
   return (
     <Box sx={{ width: "100%", maxWidth: { sm: "100%", md: "1700px" } }}>
       {/* cards */}
@@ -59,36 +113,38 @@ export default function MainGrid() {
         columns={12}
         sx={{ mb: (theme) => theme.spacing(2) }}
       >
-        {data.map((card, index) => (
+        {statCardsData.map((card, index) => (
           <Grid key={index} size={{ xs: 12, sm: 6, lg: 3 }}>
             <StatCard {...card} />
           </Grid>
         ))}
-        <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
+        {/* <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
           <HighlightedCard />
+        </Grid> */}
+        <Grid size={{ xs: 12, md: 6 }}>
+          <SessionsChart data={sessionsData} isLoading={isSessionsLoading} error={sessionsError} />
         </Grid>
         <Grid size={{ xs: 12, md: 6 }}>
-          <SessionsChart />
-        </Grid>
-        <Grid size={{ xs: 12, md: 6 }}>
-          <PageViewsBarChart />
+          <TopProductsChart />
         </Grid>
       </Grid>
       <Typography component="h2" variant="h6" sx={{ mb: 2 }}>
-        Details
+        Recent Activity
       </Typography>
       <Grid container spacing={2} columns={12}>
         <Grid size={{ xs: 12, lg: 9 }}>
-          <CustomizedDataGrid />
+          <CustomizedDataGrid 
+            recentOrders={recentOrders} 
+            isLoading={isOrdersLoading}
+            error={ordersError}
+          />
         </Grid>
         <Grid size={{ xs: 12, lg: 3 }}>
-          <Stack gap={2} direction={{ xs: "column", sm: "row", lg: "column" }}>
+          {/* <Stack gap={2} direction={{ xs: "column", sm: "row", lg: "column" }}>
             <CustomizedTreeView />
-            <ChartUserByCountry />
-          </Stack>
+          </Stack> */}
         </Grid>
       </Grid>
-      {/* <Copyright sx={{ my: 4 }} /> */}
     </Box>
   );
 }
