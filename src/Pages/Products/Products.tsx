@@ -1,5 +1,5 @@
 // src/Pages/Products/Products.tsx
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import {
   Box,
   Grid,
@@ -25,6 +25,8 @@ import {
   Avatar,
   Switch,
   FormControlLabel,
+  useTheme,
+  useMediaQuery,
 } from "@mui/material";
 import {
   Search as SearchIcon,
@@ -44,10 +46,18 @@ import {
   getProductStats,
 } from "../../services/productService";
 import { getCategories } from "../../services/categoryService";
-import type { Product, CreateProductData } from "../../services/productService";
+import { getSubCategories } from "../../services/subcategoryService";
+import type {
+  Product,
+  CreateProductData,
+} from "../../services/productService";
 import type { Category } from "../../services/categoryService";
+import type { SubCategory } from "../../services/subcategoryService";
 
 export default function Products() {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [categoryFilter, setCategoryFilter] = useState("all");
@@ -88,15 +98,46 @@ export default function Products() {
   // Ensure products is always an array
   const products = Array.isArray(productsData) ? productsData : [];
 
-  const { data: categories = [], isLoading: isCategoriesLoading } = useQuery({
+  const { data: categoriesData, isLoading: isCategoriesLoading } = useQuery({
     queryKey: ["categories"],
     queryFn: getCategories,
   });
+
+  // Ensure categories is always an array
+  const categories = Array.isArray(categoriesData) ? categoriesData : [];
+  
+  // Debug: Log categories data
+  console.log('Categories data:', categories);
+
+  // Fetch subcategories separately
+  const { data: subcategoriesData } = useQuery({
+    queryKey: ["subcategories"],
+    queryFn: getSubCategories,
+  });
+
+  // Ensure subcategories is always an array
+  const subcategories = Array.isArray(subcategoriesData) ? subcategoriesData : [];
 
   const { data: stats, isLoading: isStatsLoading } = useQuery({
     queryKey: ["productStats"],
     queryFn: getProductStats,
   });
+
+  // Create a helper function to get category name by ID
+  const getCategoryName = (categoryId: number): string => {
+    console.log(`Looking for category with ID: ${categoryId}`);
+    console.log('Available categories:', categories);
+    const category = categories.find(cat => cat.id === categoryId);
+    const categoryName = category ? category.name : "Unknown";
+    console.log(`Found category name: ${categoryName}`);
+    return categoryName;
+  };
+
+  // Create a helper function to get subcategory name by ID
+  const getSubcategoryName = (subcategoryId: number): string => {
+    const subcategory = subcategories.find(sub => sub.id === subcategoryId);
+    return subcategory ? subcategory.name : "Unknown";
+  };
 
   const createMutation = useMutation({
     mutationFn: createProduct,
@@ -104,7 +145,10 @@ export default function Products() {
       console.log("Product created successfully:", data);
       // Invalidate and refetch to ensure we have the latest data
       queryClient.invalidateQueries({ queryKey: ["products"] });
-      refetchProducts(); // Explicitly refetch to ensure we get the latest data
+      // Wait a moment before refetching to ensure the server has processed the data
+      setTimeout(() => {
+        refetchProducts();
+      }, 500);
       handleCloseDialog();
       setSnackbar({
         open: true,
@@ -144,7 +188,9 @@ export default function Products() {
     onSuccess: (data) => {
       console.log("Product updated successfully:", data);
       queryClient.invalidateQueries({ queryKey: ["products"] });
-      refetchProducts(); // Explicitly refetch to ensure we get the latest data
+      setTimeout(() => {
+        refetchProducts();
+      }, 500);
       handleCloseDialog();
       setSnackbar({
         open: true,
@@ -182,7 +228,9 @@ export default function Products() {
     mutationFn: deleteProduct,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["products"] });
-      refetchProducts(); // Explicitly refetch to ensure we get the latest data
+      setTimeout(() => {
+        refetchProducts();
+      }, 500);
       setSnackbar({
         open: true,
         message: "Product deleted successfully",
@@ -206,7 +254,9 @@ export default function Products() {
     mutationFn: toggleProductStatus,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["products"] });
-      refetchProducts(); // Explicitly refetch to ensure we get the latest data
+      setTimeout(() => {
+        refetchProducts();
+      }, 500);
       setSnackbar({
         open: true,
         message: "Product status updated successfully",
@@ -232,7 +282,7 @@ export default function Products() {
       setFormData({
         name: product.name,
         description: product.description,
-        price: product.price,
+        price: typeof product.price === 'string' ? parseFloat(product.price) : product.price,
         category_id: product.category_id,
         subcategory_id: product.subcategory_id,
         image: product.image,
@@ -313,15 +363,10 @@ export default function Products() {
   ) => {
     const { name, value } = e.target;
 
-    if (
-      name === "price" ||
-      name === "stock" ||
-      name === "category_id" ||
-      name === "subcategory_id"
-    ) {
+    if (name === "price" || name === "stock" || name === "category_id" || name === "subcategory_id") {
       setFormData((prev) => ({
         ...prev,
-        [name]: value === "" ? 0 : parseInt(value) || 0,
+        [name]: value === "" ? 0 : parseFloat(value) || 0,
       }));
     } else {
       setFormData((prev) => ({ ...prev, [name]: value }));
@@ -353,10 +398,7 @@ export default function Products() {
   };
 
   // Get subcategories for selected category
-  const selectedCategory = categories.find(
-    (cat) => cat.id === formData.category_id
-  );
-  const subcategories = selectedCategory?.subcategories || [];
+  const categorySubcategories = subcategories.filter(sub => sub.category_id === formData.category_id);
 
   // Filter products
   const filteredProducts = products.filter((product) => {
@@ -367,108 +409,124 @@ export default function Products() {
     const matchesStatus =
       statusFilter === "all" || product.status === statusFilter;
     const matchesCategory =
-      categoryFilter === "all" ||
-      product.category_id.toString() === categoryFilter;
+      categoryFilter === "all" || product.category_id.toString() === categoryFilter;
     return matchesSearch && matchesStatus && matchesCategory;
   });
 
-  // Transform data for DataGrid
-  const rows = filteredProducts.map((product) => ({
-    id: product.id,
-    name: product.name,
-    description: product.description || "",
-    price: product.price,
-    category_name: product.category_name || "",
-    subcategory_name: product.subcategory_name || "",
-    status: product.status,
-    stock: product.stock,
-    ingredients: product.ingredients || "",
-    image: product.image || "",
-  }));
+  // Transform data for DataGrid with category and subcategory names
+  const rows = filteredProducts.map((product) => {
+    // Debug: Log product data
+    console.log('Processing product:', product);
+    
+    return {
+      id: product.id,
+      name: product.name,
+      description: product.description || "",
+      price: typeof product.price === 'string' ? parseFloat(product.price) : product.price,
+      category_name: getCategoryName(product.category_id),
+      subcategory_name: getSubcategoryName(product.subcategory_id),
+      status: product.status,
+      stock: product.stock,
+      ingredients: product.ingredients || "",
+      image: product.image || "",
+    };
+  });
 
-  const columns = [
-    {
-      field: "name",
-      headerName: "Name",
-      width: 150,
-    },
-    {
-      field: "price",
-      headerName: "Price",
-      width: 80,
-      renderCell: (params) => `$${params.value}`,
-    },
-    {
-      field: "category_name",
-      headerName: "Category",
-      width: 120,
-    },
-    {
-      field: "subcategory_name",
-      headerName: "Subcategory",
-      width: 120,
-    },
-    {
-      field: "status",
-      headerName: "Status",
-      width: 80,
-      renderCell: (params) => (
-        <Chip
-          label={params.value}
-          color={params.value === "active" ? "success" : "error"}
-          size="small"
-        />
-      ),
-    },
-    {
-      field: "stock",
-      headerName: "Stock",
-      width: 80,
-      renderCell: (params) => (
-        <Chip
-          label={params.value}
-          color={params.value > 0 ? "primary" : "error"}
-          size="small"
-        />
-      ),
-    },
-    {
-      field: "image",
-      headerName: "Image",
-      width: 80,
-      renderCell: (params) =>
-        params.value ? (
-          <Avatar
-            src={params.value}
-            alt="Product"
-            variant="rounded"
-            sx={{ width: 40, height: 40 }}
+  // Define columns based on screen size
+  const getColumns = () => {
+    const baseColumns = [
+      {
+        field: "name",
+        headerName: "Name",
+        width: isMobile ? 120 : 150,
+        flex: isMobile ? 1 : 0,
+      },
+      {
+        field: "price",
+        headerName: "Price",
+        width: isMobile ? 70 : 80,
+        renderCell: (params) => `$${params.value}`,
+      },
+      {
+        field: "status",
+        headerName: "Status",
+        width: isMobile ? 70 : 80,
+        renderCell: (params) => (
+          <Chip
+            label={params.value}
+            color={params.value === "active" ? "success" : "error"}
+            size="small"
           />
-        ) : (
-          <Avatar variant="rounded" sx={{ width: 40, height: 40 }}>
-            <ImageIcon />
-          </Avatar>
         ),
-    },
-    {
+      },
+      {
+        field: "stock",
+        headerName: "Stock",
+        width: isMobile ? 70 : 80,
+        renderCell: (params) => (
+          <Chip
+            label={params.value}
+            color={params.value > 0 ? "primary" : "error"}
+            size="small"
+          />
+        ),
+      },
+    ];
+
+    if (!isMobile) {
+      baseColumns.push(
+        {
+          field: "category_name",
+          headerName: "Category",
+          width: 120,
+        },
+        {
+          field: "subcategory_name",
+          headerName: "Subcategory",
+          width: 120,
+        },
+        {
+          field: "image",
+          headerName: "Image",
+          width: 80,
+          renderCell: (params) =>
+            params.value ? (
+              <Avatar
+                src={params.value}
+                alt="Product"
+                variant="rounded"
+                sx={{ width: 40, height: 40 }}
+              />
+            ) : (
+              <Avatar variant="rounded" sx={{ width: 40, height: 40 }}>
+                <ImageIcon />
+              </Avatar>
+            ),
+        }
+      );
+    }
+
+    baseColumns.push({
       field: "actions",
       headerName: "Actions",
-      width: 180,
+      width: isMobile ? 150 : 180,
       renderCell: (params) => (
         <Box>
           <IconButton
             color="primary"
             onClick={() => handleOpenDialog(params.row)}
             title="Edit"
+            size={isMobile ? "small" : "medium"}
           >
-            <EditIcon />
+            <EditIcon fontSize={isMobile ? "small" : "medium"} />
           </IconButton>
           <IconButton
             color="error"
             onClick={() => handleDelete(params.row.id)}
             title="Delete"
+            size={isMobile ? "small" : "medium"}
           >
-            <DeleteIcon />
+            <DeleteIcon fontSize={isMobile ? "small" : "medium"} />
           </IconButton>
           <FormControlLabel
             control={
@@ -476,14 +534,17 @@ export default function Products() {
                 checked={params.row.status === "active"}
                 onChange={() => handleToggleStatus(params.row.id)}
                 color="primary"
+                size={isMobile ? "small" : "medium"}
               />
             }
             label=""
           />
         </Box>
       ),
-    },
-  ];
+    });
+
+    return baseColumns;
+  };
 
   if (isLoading) {
     return (
@@ -510,36 +571,40 @@ export default function Products() {
   }
 
   return (
-    <Box sx={{ p: 3, maxWidth: "calc(100vw - 280px)" }}>
-      <Typography variant="h4" gutterBottom>
+    <Box sx={{ p: isMobile ? 1 : 3, maxWidth: 'calc(100vw - 280px)' }}>
+      <Typography variant={isMobile ? "h5" : "h4"} gutterBottom>
         Products Management
       </Typography>
 
       {/* Stats Cards */}
-      <Grid container spacing={3} sx={{ mb: 3 }}>
-        <Grid item xs={12} sm={6} md={3}>
+      <Grid container spacing={isMobile ? 1 : 3} sx={{ mb: 3 }}>
+        <Grid item xs={6} sm={3}>
           <Card>
-            <CardContent>
+            <CardContent sx={{ p: isMobile ? 1 : 2 }}>
               <Typography variant="h6" color="text.secondary">
                 Total Products
               </Typography>
-              <Typography variant="h4">{stats?.totalProducts || 0}</Typography>
+              <Typography variant="h4">
+                {stats?.totalProducts || 0}
+              </Typography>
             </CardContent>
           </Card>
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid item xs={6} sm={3}>
           <Card>
-            <CardContent>
+            <CardContent sx={{ p: isMobile ? 1 : 2 }}>
               <Typography variant="h6" color="text.secondary">
                 Active Products
               </Typography>
-              <Typography variant="h4">{stats?.activeProducts || 0}</Typography>
+              <Typography variant="h4">
+                {stats?.activeProducts || 0}
+              </Typography>
             </CardContent>
           </Card>
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid item xs={6} sm={3}>
           <Card>
-            <CardContent>
+            <CardContent sx={{ p: isMobile ? 1 : 2 }}>
               <Typography variant="h6" color="text.secondary">
                 Out of Stock
               </Typography>
@@ -549,9 +614,9 @@ export default function Products() {
             </CardContent>
           </Card>
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid item xs={6} sm={3}>
           <Card>
-            <CardContent>
+            <CardContent sx={{ p: isMobile ? 1 : 2 }}>
               <Typography variant="h6" color="text.secondary">
                 Total Stock Value
               </Typography>
@@ -580,14 +645,16 @@ export default function Products() {
                     </InputAdornment>
                   ),
                 }}
+                size={isMobile ? "small" : "medium"}
               />
             </Grid>
-            <Grid item xs={12} md={3}>
+            <Grid item xs={6} md={3}>
               <FormControl fullWidth>
                 <Select
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value)}
                   displayEmpty
+                  size={isMobile ? "small" : "medium"}
                 >
                   <MenuItem value="all">All Status</MenuItem>
                   <MenuItem value="active">Active</MenuItem>
@@ -595,12 +662,13 @@ export default function Products() {
                 </Select>
               </FormControl>
             </Grid>
-            <Grid item xs={12} md={3}>
+            <Grid item xs={6} md={3}>
               <FormControl fullWidth>
                 <Select
                   value={categoryFilter}
                   onChange={(e) => setCategoryFilter(e.target.value)}
                   displayEmpty
+                  size={isMobile ? "small" : "medium"}
                 >
                   <MenuItem value="all">All Categories</MenuItem>
                   {categories.map((category) => (
@@ -617,6 +685,7 @@ export default function Products() {
                 startIcon={<AddIcon />}
                 onClick={() => handleOpenDialog()}
                 fullWidth
+                size={isMobile ? "small" : "medium"}
               >
                 Add Product
               </Button>
@@ -628,29 +697,33 @@ export default function Products() {
       {/* Products Table */}
       <Card>
         <CardContent sx={{ p: 0 }}>
-          <Box sx={{ width: "100%", overflowX: "auto" }}>
+          <Box sx={{ width: '100%', overflowX: 'auto' }}>
             <DataGrid
               rows={rows}
-              columns={columns}
+              columns={getColumns()}
               initialState={{
                 pagination: {
                   paginationModel: {
-                    pageSize: 10,
+                    pageSize: isMobile ? 5 : 10,
                   },
                 },
               }}
               pageSizeOptions={[5, 10, 25]}
               disableRowSelectionOnClick
               autoHeight
+              density={isMobile ? "compact" : "standard"}
               sx={{
-                "& .MuiDataGrid-root": {
-                  border: "none",
+                '& .MuiDataGrid-root': {
+                  border: 'none',
                 },
-                "& .MuiDataGrid-columnHeaders": {
-                  backgroundColor: "rgba(0, 0, 0, 0.04)",
+                '& .MuiDataGrid-columnHeaders': {
+                  backgroundColor: 'rgba(0, 0, 0, 0.04)',
                 },
-                "& .MuiDataGrid-cell": {
-                  borderBottom: "1px solid rgba(0, 0, 0, 0.05)",
+                '& .MuiDataGrid-cell': {
+                  borderBottom: '1px solid rgba(0, 0, 0, 0.05)',
+                },
+                '& .MuiDataGrid-columnSeparator': {
+                  display: 'none',
                 },
               }}
             />
@@ -664,6 +737,7 @@ export default function Products() {
         onClose={handleCloseDialog}
         maxWidth="md"
         fullWidth
+        fullScreen={isMobile}
       >
         <DialogTitle>
           {editingProduct ? "Edit Product" : "Add New Product"}
@@ -679,6 +753,7 @@ export default function Products() {
                   value={formData.name}
                   onChange={handleInputChange}
                   required
+                  size={isMobile ? "small" : "medium"}
                 />
               </Grid>
               <Grid item xs={12} sm={6}>
@@ -691,6 +766,7 @@ export default function Products() {
                   onChange={handleInputChange}
                   inputProps={{ min: 0, step: 0.01 }}
                   required
+                  size={isMobile ? "small" : "medium"}
                 />
               </Grid>
               <Grid item xs={12}>
@@ -702,6 +778,7 @@ export default function Products() {
                   onChange={handleInputChange}
                   multiline
                   rows={3}
+                  size={isMobile ? "small" : "medium"}
                 />
               </Grid>
               <Grid item xs={12}>
@@ -713,6 +790,7 @@ export default function Products() {
                   onChange={handleInputChange}
                   multiline
                   rows={2}
+                  size={isMobile ? "small" : "medium"}
                 />
               </Grid>
               <Grid item xs={12} sm={6}>
@@ -724,6 +802,7 @@ export default function Products() {
                   value={formData.stock}
                   onChange={handleInputChange}
                   inputProps={{ min: 0 }}
+                  size={isMobile ? "small" : "medium"}
                 />
               </Grid>
               <Grid item xs={12} sm={6}>
@@ -738,6 +817,7 @@ export default function Products() {
                         subcategory_id: 0, // Reset subcategory when category changes
                       }))
                     }
+                    size={isMobile ? "small" : "medium"}
                   >
                     {categories.map((category) => (
                       <MenuItem key={category.id} value={category.id}>
@@ -758,11 +838,10 @@ export default function Products() {
                         subcategory_id: parseInt(e.target.value) || 0,
                       }))
                     }
-                    disabled={
-                      !formData.category_id || subcategories.length === 0
-                    }
+                    disabled={!formData.category_id || categorySubcategories.length === 0}
+                    size={isMobile ? "small" : "medium"}
                   >
-                    {subcategories.map((subcategory) => (
+                    {categorySubcategories.map((subcategory) => (
                       <MenuItem key={subcategory.id} value={subcategory.id}>
                         {subcategory.name}
                       </MenuItem>
@@ -781,6 +860,7 @@ export default function Products() {
                         status: e.target.value as "active" | "inactive",
                       }))
                     }
+                    size={isMobile ? "small" : "medium"}
                   >
                     <MenuItem value="active">Active</MenuItem>
                     <MenuItem value="inactive">Inactive</MenuItem>
@@ -795,6 +875,7 @@ export default function Products() {
                     variant="outlined"
                     component="label"
                     startIcon={<ImageIcon />}
+                    size={isMobile ? "small" : "medium"}
                   >
                     Upload Image
                     <input
@@ -818,11 +899,14 @@ export default function Products() {
             </Grid>
           </DialogContent>
           <DialogActions sx={{ p: 2 }}>
-            <Button onClick={handleCloseDialog}>Cancel</Button>
+            <Button onClick={handleCloseDialog} size={isMobile ? "small" : "medium"}>
+              Cancel
+            </Button>
             <Button
               type="submit"
               variant="contained"
               disabled={createMutation.isPending || updateMutation.isPending}
+              size={isMobile ? "small" : "medium"}
             >
               {editingProduct ? "Update" : "Create"}
             </Button>

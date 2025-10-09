@@ -32,9 +32,7 @@ export interface CreateCategoryData {
   imageFile?: File;
 }
 
-export const createCategory = async (
-  data: FormData
-): Promise<Category> => {
+export const createCategory = async (data: FormData): Promise<Category> => {
   try {
     const response = await apiClient.post("/categories", data, {
       headers: {
@@ -67,8 +65,23 @@ export const updateCategory = async (
 
 // Keep other functions the same
 export const getCategories = async (): Promise<Category[]> => {
-  const response = await apiClient.get("/categories");
-  return response.data.data;
+  try {
+    const response = await apiClient.get("/categories");
+    // Based on the provided response structure, the data is in response.data.data
+    if (
+      response.data &&
+      response.data.data &&
+      Array.isArray(response.data.data)
+    ) {
+      return response.data.data;
+    } else {
+      console.warn("Unexpected API response structure:", response.data);
+      return [];
+    }
+  } catch (error) {
+    console.error("Error fetching categories:", error);
+    throw error;
+  }
 };
 
 export const getCategory = async (id: number): Promise<Category> => {
