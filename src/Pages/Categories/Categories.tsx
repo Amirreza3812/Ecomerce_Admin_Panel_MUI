@@ -1,5 +1,5 @@
 // src/Pages/Categories/Categories.tsx
-import { useState } from "react";
+import { useState, useRef } from "react";
 import {
   Box,
   Grid,
@@ -22,12 +22,21 @@ import {
   Alert,
   Snackbar,
   CircularProgress,
+  List,
+  ListItem,
+  ListItemText,
+  ListItemSecondaryAction,
+  Fab,
+  Divider,
+  Avatar,
 } from "@mui/material";
 import {
   Search as SearchIcon,
   Add as AddIcon,
   Edit as EditIcon,
   Delete as DeleteIcon,
+  Image as ImageIcon,
+  Remove as RemoveIcon,
 } from "@mui/icons-material";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { DataGrid } from "@mui/x-data-grid";
@@ -41,7 +50,21 @@ import {
 import type {
   Category,
   CreateCategoryData,
+  SubCategory,
 } from "../../services/categoryService";
+
+// SubCategoryImage interface to handle file and preview
+interface SubCategoryImage {
+  file?: File;
+  preview?: string;
+  url?: string; // Existing URL from database
+}
+
+// Extended SubCategory interface to include image handling
+interface ExtendedSubCategory extends SubCategory {
+  imageFile?: File;
+  imagePreview?: string;
+}
 
 export default function Categories() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -53,8 +76,12 @@ export default function Categories() {
     description: "",
     image: "",
     status: "active",
-    sortOrder: 0,
+    sort_order: 0,
+    subcategories: [],
   });
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [snackbar, setSnackbar] = useState({
     open: false,
     message: "",
@@ -79,7 +106,8 @@ export default function Categories() {
 
   const createMutation = useMutation({
     mutationFn: createCategory,
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log("Category created successfully:", data);
       queryClient.invalidateQueries({ queryKey: ["categories"] });
       handleCloseDialog();
       setSnackbar({
@@ -90,21 +118,35 @@ export default function Categories() {
     },
     onError: (error: any) => {
       console.error("Create category error:", error);
+
+      // Try to get more detailed error information
+      let errorMessage = "Failed to create category";
+
+      if (error.response) {
+        if (error.response.data && error.response.data.message) {
+          errorMessage = error.response.data.message;
+        } else if (error.response.data && error.response.data.errors) {
+          errorMessage = error.response.data.errors
+            .map((e: any) => e.msg)
+            .join(", ");
+        }
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+
       setSnackbar({
         open: true,
-        message:
-          error.response?.data?.message ||
-          error.message ||
-          "Failed to create category",
+        message: errorMessage,
         severity: "error",
       });
     },
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, ...data }: { id: number } & CreateCategoryData) =>
+    mutationFn: ({ id, data }: { id: number; data: FormData }) =>
       updateCategory(id, data),
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log("Category updated successfully:", data);
       queryClient.invalidateQueries({ queryKey: ["categories"] });
       handleCloseDialog();
       setSnackbar({
@@ -115,12 +157,25 @@ export default function Categories() {
     },
     onError: (error: any) => {
       console.error("Update category error:", error);
+
+      // Try to get more detailed error information
+      let errorMessage = "Failed to update category";
+
+      if (error.response) {
+        if (error.response.data && error.response.data.message) {
+          errorMessage = error.response.data.message;
+        } else if (error.response.data && error.response.data.errors) {
+          errorMessage = error.response.data.errors
+            .map((e: any) => e.msg)
+            .join(", ");
+        }
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+
       setSnackbar({
         open: true,
-        message:
-          error.response?.data?.message ||
-          error.message ||
-          "Failed to update category",
+        message: errorMessage,
         severity: "error",
       });
     },
@@ -150,16 +205,53 @@ export default function Categories() {
   });
 
   const handleOpenDialog = (category?: Category) => {
-    console.log("Opening dialog with category:", category);
     if (category) {
       setEditingCategory(category);
+
+      // Ensure subcategories is always an array
+      let subcategoriesArray: any[] = [];
+
+      // Check if subcategories exists and is an array
+      if (category.subcategories && Array.isArray(category.subcategories)) {
+        subcategoriesArray = category.subcategories;
+      } else if (category.subcategories) {
+        // If it's not an array, try to parse it if it's a string
+        try {
+          if (typeof category.subcategories === "string") {
+            subcategoriesArray = JSON.parse(category.subcategories);
+          } else {
+            // If it's an object, convert it to an array
+            subcategoriesArray = [category.subcategories];
+          }
+        } catch (e) {
+          console.error("Error parsing subcategories:", e);
+          subcategoriesArray = [];
+        }
+      }
+
+      // Convert subcategories to extended format with image handling
+      const extendedSubcategories = subcategoriesArray.map((sub, index) => {
+        return {
+          id: sub.id,
+          name: sub.name || "",
+          description: sub.description || "",
+          image: sub.image || "",
+          status: sub.status || "active",
+          sort_order: sub.sort_order || 0,
+          imagePreview: sub.image || null,
+          imageFile: undefined,
+        };
+      });
+
       setFormData({
         name: category.name,
-        description: category.description,
-        image: category.image,
-        status: category.status,
-        sortOrder: category.sortOrder,
+        description: category.description || "",
+        image: category.image || "",
+        status: category.status || "active",
+        sort_order: category.sort_order || 0,
+        subcategories: extendedSubcategories,
       });
+      setImagePreview(category.image || null);
     } else {
       setEditingCategory(null);
       setFormData({
@@ -167,14 +259,16 @@ export default function Categories() {
         description: "",
         image: "",
         status: "active",
-        sortOrder: 0,
+        sort_order: 0,
+        subcategories: [],
       });
+      setImagePreview(null);
     }
+    setImageFile(null);
     setOpenDialog(true);
   };
 
   const handleCloseDialog = () => {
-    console.log("Closing dialog");
     setOpenDialog(false);
     setEditingCategory(null);
     setFormData({
@@ -182,26 +276,179 @@ export default function Categories() {
       description: "",
       image: "",
       status: "active",
-      sortOrder: 0,
+      sort_order: 0,
+      subcategories: [],
     });
+    setImagePreview(null);
+    setImageFile(null);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    console.log("Submitting form with data:", formData);
-    if (editingCategory) {
-      updateMutation.mutate({ id: editingCategory.id, ...formData });
-    } else {
-      createMutation.mutate(formData);
+ const handleSubmit = (e: React.FormEvent) => {
+  e.preventDefault();
+
+  // Create FormData for file upload
+  const data = new FormData();
+
+  // Add form fields
+  data.append("name", formData.name);
+  if (formData.description) data.append("description", formData.description);
+  if (formData.status) data.append("status", formData.status);
+  if (formData.sort_order !== undefined)
+    data.append("sort_order", formData.sort_order.toString());
+
+  // Process subcategories to handle images
+  const processedSubcategories =
+    formData.subcategories?.map((sub) => {
+      const { imageFile, imagePreview, ...subData } = sub as any;
+      return subData;
+    }) || [];
+
+  // Add subcategories as JSON string
+  if (processedSubcategories.length > 0) {
+    data.append("subcategories", JSON.stringify(processedSubcategories));
+  }
+
+  // Add category image file if selected
+  if (imageFile) {
+    data.append("image", imageFile);
+  }
+
+  // Add subcategory images
+  formData.subcategories?.forEach((sub, index) => {
+    const extendedSub = sub as ExtendedSubCategory;
+    if (extendedSub.imageFile) {
+      data.append(`subcategoryImage_${index}`, extendedSub.imageFile);
     }
-  };
+  });
+
+  if (editingCategory) {
+    // Pass FormData directly to the mutation
+    updateMutation.mutate({ id: editingCategory.id, data });
+  } else {
+    // Pass FormData directly to the mutation (without wrapping in an object)
+    createMutation.mutate(data);
+  }
+};
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     const { name, value } = e.target;
-    console.log("Input change:", name, value);
-    setFormData((prev) => ({ ...prev, [name]: value }));
+
+    if (name === "sort_order") {
+      setFormData((prev) => ({
+        ...prev,
+        [name]: value === "" ? 0 : parseInt(value) || 0,
+      }));
+    } else {
+      setFormData((prev) => ({ ...prev, [name]: value }));
+    }
+  };
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setImageFile(file);
+
+      // Create preview
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleAddSubcategory = () => {
+    setFormData((prev) => {
+      const newSubcategory: ExtendedSubCategory = {
+        name: "",
+        description: "",
+        status: "active",
+        sort_order: prev.subcategories?.length || 0,
+        image: "",
+        imagePreview: null,
+        imageFile: undefined,
+      };
+
+      return {
+        ...prev,
+        subcategories: [...(prev.subcategories || []), newSubcategory],
+      };
+    });
+  };
+
+  const handleSubcategoryChange = (
+    index: number,
+    field: keyof SubCategory,
+    value: string | number
+  ) => {
+    setFormData((prev) => {
+      const updatedSubcategories = [
+        ...(prev.subcategories || []),
+      ] as ExtendedSubCategory[];
+      updatedSubcategories[index] = {
+        ...updatedSubcategories[index],
+        [field]: value,
+      };
+
+      return {
+        ...prev,
+        subcategories: updatedSubcategories,
+      };
+    });
+  };
+
+  const handleSubcategoryImageChange = (
+    index: number,
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+
+      setFormData((prev) => {
+        const updatedSubcategories = [
+          ...(prev.subcategories || []),
+        ] as ExtendedSubCategory[];
+
+        // Create preview
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          // Update with preview after file is read
+          setFormData((currentPrev) => {
+            const currentSubcategories = [
+              ...(currentPrev.subcategories || []),
+            ] as ExtendedSubCategory[];
+            currentSubcategories[index] = {
+              ...currentSubcategories[index],
+              imagePreview: reader.result as string,
+              imageFile: file,
+            };
+            return {
+              ...currentPrev,
+              subcategories: currentSubcategories,
+            };
+          });
+        };
+        reader.readAsDataURL(file);
+
+        return {
+          ...prev,
+          subcategories: updatedSubcategories,
+        };
+      });
+    }
+  };
+
+  const handleRemoveSubcategory = (index: number) => {
+    setFormData((prev) => {
+      const updatedSubcategories = [...(prev.subcategories || [])];
+      updatedSubcategories.splice(index, 1);
+      return {
+        ...prev,
+        subcategories: updatedSubcategories,
+      };
+    });
   };
 
   const handleDelete = (id: number) => {
@@ -214,7 +461,8 @@ export default function Categories() {
   const filteredCategories = categories.filter((category) => {
     const matchesSearch =
       category.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      category.description.toLowerCase().includes(searchTerm.toLowerCase());
+      (category.description &&
+        category.description.toLowerCase().includes(searchTerm.toLowerCase()));
     const matchesStatus =
       statusFilter === "all" || category.status === statusFilter;
     return matchesSearch && matchesStatus;
@@ -224,16 +472,28 @@ export default function Categories() {
   const rows = filteredCategories.map((category) => ({
     id: category.id,
     name: category.name,
-    description: category.description,
+    description: category.description || "",
     status: category.status,
-    sortOrder: category.sortOrder,
-    subcategories: category.subcategories?.length || 0,
+    sort_order: category.sort_order || 0,
+    subcategories: Array.isArray(category.subcategories)
+      ? category.subcategories.length
+      : 0,
     createdAt: new Date(category.createdAt).toLocaleDateString(),
+    image: category.image || "",
   }));
 
   const columns = [
-    { field: "name", headerName: "Name", width: 200 },
-    { field: "description", headerName: "Description", width: 300, flex: 1 },
+    {
+      field: "name",
+      headerName: "Name",
+      width: 200,
+    },
+    {
+      field: "description",
+      headerName: "Description",
+      width: 300,
+      flex: 1,
+    },
     {
       field: "status",
       headerName: "Status",
@@ -246,9 +506,39 @@ export default function Categories() {
         />
       ),
     },
-    { field: "subcategories", headerName: "Subcategories", width: 120 },
-    { field: "sortOrder", headerName: "Sort Order", width: 100 },
-    { field: "createdAt", headerName: "Created", width: 120 },
+    {
+      field: "subcategories",
+      headerName: "Subcategories",
+      width: 120,
+    },
+    {
+      field: "sort_order",
+      headerName: "Sort Order",
+      width: 100,
+    },
+    {
+      field: "image",
+      headerName: "Image",
+      width: 100,
+      renderCell: (params) =>
+        params.value ? (
+          <Avatar
+            src={params.value}
+            alt="Category"
+            variant="rounded"
+            sx={{ width: 40, height: 40 }}
+          />
+        ) : (
+          <Avatar variant="rounded" sx={{ width: 40, height: 40 }}>
+            <ImageIcon />
+          </Avatar>
+        ),
+    },
+    {
+      field: "createdAt",
+      headerName: "Created",
+      width: 120,
+    },
     {
       field: "actions",
       headerName: "Actions",
@@ -413,7 +703,7 @@ export default function Categories() {
                 },
               },
               sorting: {
-                sortModel: [{ field: "sortOrder", sort: "asc" }],
+                sortModel: [{ field: "sort_order", sort: "asc" }],
               },
             }}
             pageSizeOptions={[5, 10, 25]}
@@ -427,7 +717,7 @@ export default function Categories() {
       <Dialog
         open={openDialog}
         onClose={handleCloseDialog}
-        maxWidth="sm"
+        maxWidth="md"
         fullWidth
       >
         <DialogTitle>
@@ -457,23 +747,44 @@ export default function Categories() {
                   rows={3}
                 />
               </Grid>
+
+              {/* Image Upload */}
               <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  label="Image URL"
-                  name="image"
-                  value={formData.image}
-                  onChange={handleInputChange}
-                />
+                <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                  <Button
+                    variant="outlined"
+                    component="label"
+                    startIcon={<ImageIcon />}
+                  >
+                    Upload Image
+                    <input
+                      type="file"
+                      hidden
+                      accept="image/*"
+                      onChange={handleImageChange}
+                      ref={fileInputRef}
+                    />
+                  </Button>
+                  {imagePreview && (
+                    <Avatar
+                      src={imagePreview}
+                      alt="Category preview"
+                      variant="rounded"
+                      sx={{ width: 60, height: 60 }}
+                    />
+                  )}
+                </Box>
               </Grid>
+
               <Grid item xs={12} sm={6}>
                 <TextField
                   fullWidth
                   label="Sort Order"
-                  name="sortOrder"
+                  name="sort_order"
                   type="number"
-                  value={formData.sortOrder}
+                  value={formData.sort_order}
                   onChange={handleInputChange}
+                  inputProps={{ min: 0 }}
                 />
               </Grid>
               <Grid item xs={12} sm={6}>
@@ -492,6 +803,137 @@ export default function Categories() {
                     <MenuItem value="inactive">Inactive</MenuItem>
                   </Select>
                 </FormControl>
+              </Grid>
+
+              {/* Subcategories Section */}
+              <Grid item xs={12}>
+                <Typography variant="h6" gutterBottom>
+                  Subcategories ({formData.subcategories?.length || 0})
+                </Typography>
+                {formData.subcategories && formData.subcategories.length > 0 ? (
+                  <List>
+                    {formData.subcategories.map((subcategory, index) => (
+                      <Box key={index}>
+                        <ListItem>
+                          <Grid container spacing={2}>
+                            <Grid item xs={12} sm={3}>
+                              <TextField
+                                fullWidth
+                                label="Name"
+                                value={subcategory.name || ""}
+                                onChange={(e) =>
+                                  handleSubcategoryChange(
+                                    index,
+                                    "name",
+                                    e.target.value
+                                  )
+                                }
+                                size="small"
+                              />
+                            </Grid>
+                            <Grid item xs={12} sm={3}>
+                              <TextField
+                                fullWidth
+                                label="Description"
+                                value={subcategory.description || ""}
+                                onChange={(e) =>
+                                  handleSubcategoryChange(
+                                    index,
+                                    "description",
+                                    e.target.value
+                                  )
+                                }
+                                size="small"
+                              />
+                            </Grid>
+                            <Grid item xs={12} sm={2}>
+                              <TextField
+                                fullWidth
+                                label="Sort Order"
+                                type="number"
+                                value={subcategory.sort_order || 0}
+                                onChange={(e) =>
+                                  handleSubcategoryChange(
+                                    index,
+                                    "sort_order",
+                                    parseInt(e.target.value) || 0
+                                  )
+                                }
+                                size="small"
+                                inputProps={{ min: 0 }}
+                              />
+                            </Grid>
+                            <Grid item xs={12} sm={3}>
+                              <Box
+                                sx={{
+                                  display: "flex",
+                                  alignItems: "center",
+                                  gap: 1,
+                                }}
+                              >
+                                <Button
+                                  variant="outlined"
+                                  component="label"
+                                  size="small"
+                                  startIcon={<ImageIcon />}
+                                >
+                                  Image
+                                  <input
+                                    type="file"
+                                    hidden
+                                    accept="image/*"
+                                    onChange={(e) =>
+                                      handleSubcategoryImageChange(index, e)
+                                    }
+                                  />
+                                </Button>
+                                {(subcategory as ExtendedSubCategory)
+                                  .imagePreview && (
+                                  <Avatar
+                                    src={
+                                      (subcategory as ExtendedSubCategory)
+                                        .imagePreview
+                                    }
+                                    alt="Subcategory preview"
+                                    variant="rounded"
+                                    sx={{ width: 30, height: 30 }}
+                                  />
+                                )}
+                              </Box>
+                            </Grid>
+                            <Grid item xs={12} sm={1}>
+                              <IconButton
+                                color="error"
+                                onClick={() => handleRemoveSubcategory(index)}
+                              >
+                                <RemoveIcon />
+                              </IconButton>
+                            </Grid>
+                          </Grid>
+                        </ListItem>
+                        <Divider />
+                      </Box>
+                    ))}
+                  </List>
+                ) : (
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    sx={{ py: 2 }}
+                  >
+                    No subcategories added yet. Click the + button to add one.
+                  </Typography>
+                )}
+                <Box sx={{ display: "flex", justifyContent: "center", mt: 2 }}>
+                  <Fab
+                    size="small"
+                    color="primary"
+                    aria-label="add"
+                    onClick={handleAddSubcategory}
+                  >
+                    <AddIcon />
+                  </Fab>
+                </Box>
               </Grid>
             </Grid>
           </DialogContent>
