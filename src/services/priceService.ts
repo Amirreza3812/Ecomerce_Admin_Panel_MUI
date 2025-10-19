@@ -104,7 +104,7 @@ export const setBulkPrices = async (
   data: BulkPriceUpdateData
 ): Promise<any> => {
   try {
-    const response = await apiClient.patch("/set-bulk", data);
+    const response = await apiClient.patch("/prices/set-bulk", data);
     return response.data;
   } catch (error) {
     console.error("Error setting bulk prices:", error);
