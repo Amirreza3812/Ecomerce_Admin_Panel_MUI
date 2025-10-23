@@ -26,12 +26,7 @@ import { useModules } from "../../../contexes/ModuleContext.tsx";
 // The list of items remains the same, with a unique 'key' for each
 const mainListItems = [
   { key: "home", text: "Home", icon: <HomeRoundedIcon />, path: "/dashboard" },
-  {
-    key: "orders",
-    text: "Orders",
-    icon: <AssignmentRoundedIcon />,
-    path: "/dashboard/orders",
-  },
+
   {
     key: "categories",
     text: "Categories",
@@ -55,6 +50,12 @@ const mainListItems = [
     text: "Prices",
     icon: <PriceChangeIcon />,
     path: "/dashboard/prices",
+  },
+  {
+    key: "orders",
+    text: "Orders",
+    icon: <AssignmentRoundedIcon />,
+    path: "/dashboard/orders",
   },
   {
     key: "customers",

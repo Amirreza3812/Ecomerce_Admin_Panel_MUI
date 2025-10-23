@@ -663,3 +663,10 @@ export default function Prices() {
     </Box>
   );
 }
+
+
+// {
+//   "percentage": 15,
+//   "categoryId": 1,
+//   "subcategoryId": 1
+// }

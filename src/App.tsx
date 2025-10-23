@@ -49,12 +49,12 @@ function AppRoutes() {
 
           {/* --- CONDITIONAL ROUTES --- */}
           {/* Only render the route if the corresponding module is enabled */}
-          {modules?.orders && <Route path="orders" element={<Orders />} />}
           {modules?.banking && <Route path="banking" element={<Banking />} />}
           {modules?.categories && (
             <Route path="categories" element={<Categories />} />
           )}
           {modules?.prices && <Route path="prices" element={<Price />} />}
+          {modules?.orders && <Route path="orders" element={<Orders />} />}
           {modules?.products && (
             <Route path="products" element={<Products />} />
           )}
