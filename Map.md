@@ -19,9 +19,9 @@ ADMIN-DASHBOARD/
 │   │   ├── Banking/
 │   │       ├── Banking.tsx(Not Complete yet(I dont create backend yet))
 │   │   ├── Categories/
-│   │       ├── Categories.tsx (Haves Problem)
+│   │       ├── Categories.tsx 
 │   │   ├── Comment/
-│   │       ├── Comments.tsx(Not Complete yet)
+│   │       ├── Comments.tsx
 │   │   ├── Customer/
 │   │       ├── Customer.tsx(Not Complete yet)
 │   │   ├── Dashboard/
@@ -91,7 +91,7 @@ ADMIN-DASHBOARD/
 │   │   │       ├── ForgotPassword.tsx
 │   │       ├── SignIn.tsx
 │   │   ├── SubCategories/
-│   │       ├── SubCategories.tsx(Not Complete yet(I have backend problems))
+│   │       ├── SubCategories.tsx
 │   │
 │   ├── routes/                      → مدیریت مسیرهای برنامه
 │   │   ├── ProtectedRoute.tsx
@@ -100,7 +100,11 @@ ADMIN-DASHBOARD/
 │   ├── services/                    → ارتباط با API و سرویس‌ها
 │   │   ├── api.ts
 │   │   ├── categoryService.ts
+│   │   ├── subcategoryService.ts
 │   │   ├── dashboardService.ts
+│   │   ├── productService.ts
+│   │   ├── commentService.ts
+│   │   ├── priceService.ts
 │   │   ├── productService.ts
 │   │   └── orderService.ts
 │   │

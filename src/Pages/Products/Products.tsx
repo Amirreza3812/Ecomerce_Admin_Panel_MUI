@@ -128,7 +128,7 @@ export default function Products() {
     console.log(`Looking for category with ID: ${categoryId}`);
     console.log('Available categories:', categories);
     const category = categories.find(cat => cat.id === categoryId);
-    const categoryName = category ? category.name : "Unknown";
+    const categoryName = category ? category.name : "ناشناس";
     console.log(`Found category name: ${categoryName}`);
     return categoryName;
   };
@@ -136,7 +136,7 @@ export default function Products() {
   // Create a helper function to get subcategory name by ID
   const getSubcategoryName = (subcategoryId: number): string => {
     const subcategory = subcategories.find(sub => sub.id === subcategoryId);
-    return subcategory ? subcategory.name : "Unknown";
+    return subcategory ? subcategory.name : "ناشناس";
   };
 
   const createMutation = useMutation({
@@ -152,7 +152,7 @@ export default function Products() {
       handleCloseDialog();
       setSnackbar({
         open: true,
-        message: "Product created successfully",
+        message: "محصول با موفقیت ایجاد شد",
         severity: "success",
       });
     },
@@ -160,7 +160,7 @@ export default function Products() {
       console.error("Create product error:", error);
 
       // Try to get more detailed error information
-      let errorMessage = "Failed to create product";
+      let errorMessage = "خطا در ایجاد محصول";
 
       if (error.response) {
         if (error.response.data && error.response.data.message) {
@@ -194,7 +194,7 @@ export default function Products() {
       handleCloseDialog();
       setSnackbar({
         open: true,
-        message: "Product updated successfully",
+        message: "محصول با موفقیت به‌روزرسانی شد",
         severity: "success",
       });
     },
@@ -202,7 +202,7 @@ export default function Products() {
       console.error("Update product error:", error);
 
       // Try to get more detailed error information
-      let errorMessage = "Failed to update product";
+      let errorMessage = "خطا در به‌روزرسانی محصول";
 
       if (error.response) {
         if (error.response.data && error.response.data.message) {
@@ -233,7 +233,7 @@ export default function Products() {
       }, 500);
       setSnackbar({
         open: true,
-        message: "Product deleted successfully",
+        message: "محصول با موفقیت حذف شد",
         severity: "success",
       });
     },
@@ -244,7 +244,7 @@ export default function Products() {
         message:
           error.response?.data?.message ||
           error.message ||
-          "Failed to delete product",
+          "خطا در حذف محصول",
         severity: "error",
       });
     },
@@ -259,7 +259,7 @@ export default function Products() {
       }, 500);
       setSnackbar({
         open: true,
-        message: "Product status updated successfully",
+        message: "وضعیت محصول با موفقیت به‌روزرسانی شد",
         severity: "success",
       });
     },
@@ -270,7 +270,7 @@ export default function Products() {
         message:
           error.response?.data?.message ||
           error.message ||
-          "Failed to update product status",
+          "خطا در به‌روزرسانی وضعیت محصول",
         severity: "error",
       });
     },
@@ -388,7 +388,7 @@ export default function Products() {
   };
 
   const handleDelete = (id: number) => {
-    if (window.confirm("Are you sure you want to delete this product?")) {
+    if (window.confirm("آیا از حذف این محصول مطمئن هستید؟")) {
       deleteMutation.mutate(id);
     }
   };
@@ -437,23 +437,23 @@ export default function Products() {
     const baseColumns = [
       {
         field: "name",
-        headerName: "Name",
+        headerName: "نام",
         width: isMobile ? 120 : 150,
         flex: isMobile ? 1 : 0,
       },
       {
         field: "price",
-        headerName: "Price",
+        headerName: "قیمت",
         width: isMobile ? 70 : 80,
         renderCell: (params) => `$${params.value}`,
       },
       {
         field: "status",
-        headerName: "Status",
+        headerName: "وضعیت",
         width: isMobile ? 70 : 80,
         renderCell: (params) => (
           <Chip
-            label={params.value}
+            label={params.value === "active" ? "فعال" : "غیرفعال"}
             color={params.value === "active" ? "success" : "error"}
             size="small"
           />
@@ -461,7 +461,7 @@ export default function Products() {
       },
       {
         field: "stock",
-        headerName: "Stock",
+        headerName: "موجودی",
         width: isMobile ? 70 : 80,
         renderCell: (params) => (
           <Chip
@@ -477,17 +477,17 @@ export default function Products() {
       baseColumns.push(
         {
           field: "category_name",
-          headerName: "Category",
+          headerName: "دسته‌بندی",
           width: 120,
         },
         {
           field: "subcategory_name",
-          headerName: "Subcategory",
+          headerName: "زیردسته‌بندی",
           width: 120,
         },
         {
           field: "image",
-          headerName: "Image",
+          headerName: "تصویر",
           width: 80,
           renderCell: (params) =>
             params.value ? (
@@ -508,14 +508,14 @@ export default function Products() {
 
     baseColumns.push({
       field: "actions",
-      headerName: "Actions",
+      headerName: "عملیات",
       width: isMobile ? 150 : 180,
       renderCell: (params) => (
         <Box>
           <IconButton
             color="primary"
             onClick={() => handleOpenDialog(params.row)}
-            title="Edit"
+            title="ویرایش"
             size={isMobile ? "small" : "medium"}
           >
             <EditIcon fontSize={isMobile ? "small" : "medium"} />
@@ -523,7 +523,7 @@ export default function Products() {
           <IconButton
             color="error"
             onClick={() => handleDelete(params.row.id)}
-            title="Delete"
+            title="حذف"
             size={isMobile ? "small" : "medium"}
           >
             <DeleteIcon fontSize={isMobile ? "small" : "medium"} />
@@ -565,7 +565,7 @@ export default function Products() {
     console.error("Products query error:", error);
     return (
       <Alert severity="error" sx={{ m: 2 }}>
-        Error loading products: {error.message}
+        خطا در بارگذاری محصولات: {error.message}
       </Alert>
     );
   }
@@ -573,16 +573,16 @@ export default function Products() {
   return (
     <Box sx={{ p: isMobile ? 1 : 3, maxWidth: 'calc(100vw - 280px)' }}>
       <Typography variant={isMobile ? "h5" : "h4"} gutterBottom>
-        Products Management
+        مدیریت محصولات
       </Typography>
 
       {/* Stats Cards */}
-      <Grid container spacing={isMobile ? 1 : 3} sx={{ mb: 3 }}>
+      <Grid container spacing={isMobile ? 1 : 3} sx={{ mb: 3 }} justifyContent="right">
         <Grid item xs={6} sm={3}>
           <Card>
             <CardContent sx={{ p: isMobile ? 1 : 2 }}>
               <Typography variant="h6" color="text.secondary">
-                Total Products
+                مجموع محصولات
               </Typography>
               <Typography variant="h4">
                 {stats?.totalProducts || 0}
@@ -594,7 +594,7 @@ export default function Products() {
           <Card>
             <CardContent sx={{ p: isMobile ? 1 : 2 }}>
               <Typography variant="h6" color="text.secondary">
-                Active Products
+                محصولات فعال
               </Typography>
               <Typography variant="h4">
                 {stats?.activeProducts || 0}
@@ -606,7 +606,7 @@ export default function Products() {
           <Card>
             <CardContent sx={{ p: isMobile ? 1 : 2 }}>
               <Typography variant="h6" color="text.secondary">
-                Out of Stock
+                ناموجود
               </Typography>
               <Typography variant="h4">
                 {stats?.outOfStockProducts || 0}
@@ -618,7 +618,7 @@ export default function Products() {
           <Card>
             <CardContent sx={{ p: isMobile ? 1 : 2 }}>
               <Typography variant="h6" color="text.secondary">
-                Total Stock Value
+                ارزش کل موجودی
               </Typography>
               <Typography variant="h4">
                 ${stats?.totalStockValue || 0}
@@ -631,11 +631,11 @@ export default function Products() {
       {/* Search and Actions */}
       <Card sx={{ mb: 3 }}>
         <CardContent>
-          <Grid container spacing={2} alignItems="center">
+          <Grid container spacing={2} alignItems="center" justifyContent="right">
             <Grid item xs={12} md={4}>
               <TextField
                 fullWidth
-                placeholder="Search products..."
+                placeholder="جستجوی محصولات..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 InputProps={{
@@ -656,9 +656,9 @@ export default function Products() {
                   displayEmpty
                   size={isMobile ? "small" : "medium"}
                 >
-                  <MenuItem value="all">All Status</MenuItem>
-                  <MenuItem value="active">Active</MenuItem>
-                  <MenuItem value="inactive">Inactive</MenuItem>
+                  <MenuItem value="all">همه وضعیت‌ها</MenuItem>
+                  <MenuItem value="active">فعال</MenuItem>
+                  <MenuItem value="inactive">غیرفعال</MenuItem>
                 </Select>
               </FormControl>
             </Grid>
@@ -670,7 +670,7 @@ export default function Products() {
                   displayEmpty
                   size={isMobile ? "small" : "medium"}
                 >
-                  <MenuItem value="all">All Categories</MenuItem>
+                  <MenuItem value="all">همه دسته‌بندی‌ها</MenuItem>
                   {categories.map((category) => (
                     <MenuItem key={category.id} value={category.id.toString()}>
                       {category.name}
@@ -687,7 +687,7 @@ export default function Products() {
                 fullWidth
                 size={isMobile ? "small" : "medium"}
               >
-                Add Product
+                افزودن محصول
               </Button>
             </Grid>
           </Grid>
@@ -740,7 +740,7 @@ export default function Products() {
         fullScreen={isMobile}
       >
         <DialogTitle>
-          {editingProduct ? "Edit Product" : "Add New Product"}
+          {editingProduct ? "ویرایش محصول" : "افزودن محصول جدید"}
         </DialogTitle>
         <form onSubmit={handleSubmit}>
           <DialogContent>
@@ -748,7 +748,7 @@ export default function Products() {
               <Grid item xs={12} sm={6}>
                 <TextField
                   fullWidth
-                  label="Product Name"
+                  label="نام محصول"
                   name="name"
                   value={formData.name}
                   onChange={handleInputChange}
@@ -759,7 +759,7 @@ export default function Products() {
               <Grid item xs={12} sm={6}>
                 <TextField
                   fullWidth
-                  label="Price"
+                  label="قیمت"
                   name="price"
                   type="number"
                   value={formData.price}
@@ -772,7 +772,7 @@ export default function Products() {
               <Grid item xs={12}>
                 <TextField
                   fullWidth
-                  label="Description"
+                  label="توضیحات"
                   name="description"
                   value={formData.description}
                   onChange={handleInputChange}
@@ -784,7 +784,7 @@ export default function Products() {
               <Grid item xs={12}>
                 <TextField
                   fullWidth
-                  label="Ingredients"
+                  label="ترکیبات"
                   name="ingredients"
                   value={formData.ingredients}
                   onChange={handleInputChange}
@@ -796,7 +796,7 @@ export default function Products() {
               <Grid item xs={12} sm={6}>
                 <TextField
                   fullWidth
-                  label="Stock Quantity"
+                  label="تعداد موجودی"
                   name="stock"
                   type="number"
                   value={formData.stock}
@@ -807,7 +807,7 @@ export default function Products() {
               </Grid>
               <Grid item xs={12} sm={6}>
                 <FormControl fullWidth required>
-                  <InputLabel>Category</InputLabel>
+                  <InputLabel>دسته‌بندی</InputLabel>
                   <Select
                     value={formData.category_id}
                     onChange={(e) =>
@@ -829,7 +829,7 @@ export default function Products() {
               </Grid>
               <Grid item xs={12} sm={6}>
                 <FormControl fullWidth required>
-                  <InputLabel>Subcategory</InputLabel>
+                  <InputLabel>زیردسته‌بندی</InputLabel>
                   <Select
                     value={formData.subcategory_id}
                     onChange={(e) =>
@@ -851,7 +851,7 @@ export default function Products() {
               </Grid>
               <Grid item xs={12} sm={6}>
                 <FormControl fullWidth>
-                  <InputLabel>Status</InputLabel>
+                  <InputLabel>وضعیت</InputLabel>
                   <Select
                     value={formData.status}
                     onChange={(e) =>
@@ -862,8 +862,8 @@ export default function Products() {
                     }
                     size={isMobile ? "small" : "medium"}
                   >
-                    <MenuItem value="active">Active</MenuItem>
-                    <MenuItem value="inactive">Inactive</MenuItem>
+                    <MenuItem value="active">فعال</MenuItem>
+                    <MenuItem value="inactive">غیرفعال</MenuItem>
                   </Select>
                 </FormControl>
               </Grid>
@@ -877,7 +877,7 @@ export default function Products() {
                     startIcon={<ImageIcon />}
                     size={isMobile ? "small" : "medium"}
                   >
-                    Upload Image
+                    بارگذاری تصویر
                     <input
                       type="file"
                       hidden
@@ -900,7 +900,7 @@ export default function Products() {
           </DialogContent>
           <DialogActions sx={{ p: 2 }}>
             <Button onClick={handleCloseDialog} size={isMobile ? "small" : "medium"}>
-              Cancel
+              انصراف
             </Button>
             <Button
               type="submit"
@@ -908,7 +908,7 @@ export default function Products() {
               disabled={createMutation.isPending || updateMutation.isPending}
               size={isMobile ? "small" : "medium"}
             >
-              {editingProduct ? "Update" : "Create"}
+              {editingProduct ? "به‌روزرسانی" : "ایجاد"}
             </Button>
           </DialogActions>
         </form>

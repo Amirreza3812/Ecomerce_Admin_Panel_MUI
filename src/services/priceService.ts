@@ -33,6 +33,7 @@ export interface PriceIncreaseData {
 
 export interface PriceDiscountData {
   percentage: number;
+  duration: number; // Added duration field
   categoryId?: number;
   subcategoryId?: number;
 }

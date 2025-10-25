@@ -56,7 +56,7 @@ export default function MainGrid() {
   if (dashboardError) {
     return (
       <Alert severity="error" sx={{ mt: 2 }}>
-        Error loading dashboard data: {dashboardError.message}
+        خطا در بارگذاری داده‌های داشبورد: {dashboardError.message}
       </Alert>
     );
   }
@@ -64,36 +64,36 @@ export default function MainGrid() {
   // Transform the backend data to match the StatCardProps format
   const statCardsData: StatCardProps[] = [
     {
-      title: "New Customers",
+      title: "مشتریان جدید",
       value: dashboardData?.newCustomers.value.toString() || "0",
-      interval: "Last 30 days",
+      interval: "۳۰ روز گذشته",
       trend: dashboardData?.newCustomers.change > 0 ? "up" : 
              dashboardData?.newCustomers.change < 0 ? "down" : "neutral",
       data: [], // We'll need to add this data from the backend
       change: dashboardData?.newCustomers.change,
     },
     {
-      title: "Total Orders",
+      title: "مجموع سفارشات",
       value: dashboardData?.totalOrders.value.toString() || "0",
-      interval: "Last 30 days",
+      interval: "۳۰ روز گذشته",
       trend: dashboardData?.totalOrders.change > 0 ? "up" : 
              dashboardData?.totalOrders.change < 0 ? "down" : "neutral",
       data: [], // We'll need to add this data from the backend
       change: dashboardData?.totalOrders.change,
     },
     {
-      title: "Total Revenue",
+      title: "درآمد کل",
       value: `$${dashboardData?.totalRevenue.value || 0}`,
-      interval: "Last 30 days",
+      interval: "۳۰ روز گذشته",
       trend: dashboardData?.totalRevenue.change > 0 ? "up" : 
              dashboardData?.totalRevenue.change < 0 ? "down" : "neutral",
       data: [], // We'll need to add this data from the backend
       change: dashboardData?.totalRevenue.change,
     },
     {
-      title: "Active Products",
+      title: "محصولات فعال",
       value: dashboardData?.activeProducts.value.toString() || "0",
-      interval: "All time",
+      interval: "همه زمان‌ها",
       trend: dashboardData?.activeProducts.change > 0 ? "up" : 
              dashboardData?.activeProducts.change < 0 ? "down" : "neutral",
       data: [], // We'll need to add this data from the backend
@@ -102,10 +102,10 @@ export default function MainGrid() {
   ];
 
   return (
-    <Box sx={{ width: "100%", maxWidth: { sm: "100%", md: "1700px" } }}>
+    <Box sx={{ width: "100%", maxWidth: { sm: "100%", md: "1700px" }, direction:"rtl" }}>
       {/* cards */}
       <Typography component="h2" variant="h6" sx={{ mb: 2 }}>
-        Overview
+        نمای کلی
       </Typography>
       <Grid
         container
@@ -129,7 +129,7 @@ export default function MainGrid() {
         </Grid>
       </Grid>
       <Typography component="h2" variant="h6" sx={{ mb: 2 }}>
-        Recent Activity
+        فعالیت‌های اخیر
       </Typography>
       <Grid container spacing={2} columns={12}>
         <Grid size={{ xs: 12, lg: 9 }}>

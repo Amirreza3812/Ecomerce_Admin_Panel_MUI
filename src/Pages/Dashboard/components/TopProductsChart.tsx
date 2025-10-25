@@ -42,7 +42,7 @@ export default function TopProductsChart() {
   if (error) {
     return (
       <Alert severity="error" sx={{ m: 2 }}>
-        Error loading top products: {error.message}
+        خطا در بارگذاری محصولات برتر: {error.message}
       </Alert>
     );
   }
@@ -73,7 +73,7 @@ export default function TopProductsChart() {
         sx={{ flexGrow: 1, display: "flex", flexDirection: "column", p: 2 }}
       >
         <Typography component="h2" variant="subtitle2" gutterBottom>
-          Top Products
+          محصولات برتر
         </Typography>
 
         {/* Chart Container */}
@@ -110,7 +110,7 @@ export default function TopProductsChart() {
             series={[
               {
                 dataKey: "sales",
-                label: "Units Sold",
+                label: "تعداد فروش",
                 color: "#8884d8",
                 valueFormatter: (value: number) => value.toString(),
               },
@@ -180,7 +180,7 @@ export default function TopProductsChart() {
                   {item.product.name}
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
-                  {item.totalQuantity} sold • ${item.totalRevenue.toFixed(2)}
+                  {item.totalQuantity} فروخته شده • ${item.totalRevenue.toFixed(2)}
                 </Typography>
               </Box>
             </Box>

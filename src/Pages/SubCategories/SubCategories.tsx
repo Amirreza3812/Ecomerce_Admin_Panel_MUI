@@ -41,10 +41,12 @@ import {
   updateSubCategory,
   deleteSubCategory,
   toggleSubCategoryStatus,
+  getIcons,
 } from "../../services/subcategoryService";
 import type {
   SubCategory,
   CreateSubCategoryData,
+  IconOption,
 } from "../../services/subcategoryService";
 import { getCategories } from "../../services/categoryService";
 import type { Category } from "../../services/categoryService";
@@ -59,14 +61,12 @@ export default function SubCategories() {
   const [formData, setFormData] = useState<CreateSubCategoryData>({
     name: "",
     description: "",
-    image: "",
+    icon: "",
     status: "active",
     sort_order: 0,
     category_id: 0,
   });
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const [imageFile, setImageFile] = useState<File | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [iconPreview, setIconPreview] = useState<string | null>(null);
   const [snackbar, setSnackbar] = useState({
     open: false,
     message: "",
@@ -89,6 +89,11 @@ export default function SubCategories() {
     queryFn: getCategories,
   });
 
+  const { data: icons = [] } = useQuery({
+    queryKey: ["icons"],
+    queryFn: getIcons,
+  });
+
   const createMutation = useMutation({
     mutationFn: createSubCategory,
     onSuccess: () => {
@@ -96,7 +101,7 @@ export default function SubCategories() {
       handleCloseDialog();
       setSnackbar({
         open: true,
-        message: "Subcategory created successfully",
+        message: "زیردسته‌بندی با موفقیت ایجاد شد",
         severity: "success",
       });
     },
@@ -107,7 +112,7 @@ export default function SubCategories() {
         message:
           error.response?.data?.message ||
           error.message ||
-          "Failed to create subcategory",
+          "خطا در ایجاد زیردسته‌بندی",
         severity: "error",
       });
     },
@@ -121,7 +126,7 @@ export default function SubCategories() {
       handleCloseDialog();
       setSnackbar({
         open: true,
-        message: "Subcategory updated successfully",
+        message: "زیردسته‌بندی با موفقیت به‌روزرسانی شد",
         severity: "success",
       });
     },
@@ -132,7 +137,7 @@ export default function SubCategories() {
         message:
           error.response?.data?.message ||
           error.message ||
-          "Failed to update subcategory",
+          "خطا در به‌روزرسانی زیردسته‌بندی",
         severity: "error",
       });
     },
@@ -144,7 +149,7 @@ export default function SubCategories() {
       queryClient.invalidateQueries({ queryKey: ["subcategories"] });
       setSnackbar({
         open: true,
-        message: "Subcategory deleted successfully",
+        message: "زیردسته‌بندی با موفقیت حذف شد",
         severity: "success",
       });
     },
@@ -155,7 +160,7 @@ export default function SubCategories() {
         message:
           error.response?.data?.message ||
           error.message ||
-          "Failed to delete subcategory",
+          "خطا در حذف زیردسته‌بندی",
         severity: "error",
       });
     },
@@ -167,7 +172,7 @@ export default function SubCategories() {
       queryClient.invalidateQueries({ queryKey: ["subcategories"] });
       setSnackbar({
         open: true,
-        message: "Subcategory status updated successfully",
+        message: "وضعیت زیردسته‌بندی با موفقیت به‌روزرسانی شد",
         severity: "success",
       });
     },
@@ -178,7 +183,7 @@ export default function SubCategories() {
         message:
           error.response?.data?.message ||
           error.message ||
-          "Failed to update subcategory status",
+          "خطا در به‌روزرسانی وضعیت زیردسته‌بندی",
         severity: "error",
       });
     },
@@ -190,25 +195,24 @@ export default function SubCategories() {
       setFormData({
         name: subcategory.name,
         description: subcategory.description || "",
-        image: subcategory.image || "",
+        icon: subcategory.icon || "",
         status: subcategory.status || "active",
         sort_order: subcategory.sort_order || 0,
         category_id: subcategory.category_id,
       });
-      setImagePreview(subcategory.image || null);
+      setIconPreview(subcategory.icon || null);
     } else {
       setEditingSubCategory(null);
       setFormData({
         name: "",
         description: "",
-        image: "",
+        icon: "",
         status: "active",
         sort_order: 0,
         category_id: categories.length > 0 ? categories[0].id : 0,
       });
-      setImagePreview(null);
+      setIconPreview(null);
     }
-    setImageFile(null);
     setOpenDialog(true);
   };
 
@@ -218,13 +222,12 @@ export default function SubCategories() {
     setFormData({
       name: "",
       description: "",
-      image: "",
+      icon: "",
       status: "active",
       sort_order: 0,
       category_id: categories.length > 0 ? categories[0].id : 0,
     });
-    setImagePreview(null);
-    setImageFile(null);
+    setIconPreview(null);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -234,10 +237,9 @@ export default function SubCategories() {
       updateMutation.mutate({
         id: editingSubCategory.id,
         ...formData,
-        imageFile,
       });
     } else {
-      createMutation.mutate({ ...formData, imageFile });
+      createMutation.mutate(formData);
     }
   };
 
@@ -256,22 +258,13 @@ export default function SubCategories() {
     }
   };
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      setImageFile(file);
-
-      // Create preview
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
+  const handleIconChange = (iconName: string, iconUrl: string) => {
+    setFormData((prev) => ({ ...prev, icon: iconName }));
+    setIconPreview(iconUrl);
   };
 
   const handleDelete = (id: number) => {
-    if (window.confirm("Are you sure you want to delete this subcategory?")) {
+    if (window.confirm("آیا از حذف این زیردسته‌بندی مطمئن هستید؟")) {
       deleteMutation.mutate(id);
     }
   };
@@ -300,6 +293,13 @@ export default function SubCategories() {
     return matchesSearch && matchesStatus && matchesCategory;
   });
 
+    // Helper function to find icon URL by name
+  const getIconUrl = (iconName: string) => {
+    const icon = icons.find((i) => i.name === iconName);
+    return icon ? icon.url : null;
+  };
+
+
   // Transform data for DataGrid
   const rows = filteredSubcategories.map((subcategory) => ({
     id: subcategory.id,
@@ -307,36 +307,36 @@ export default function SubCategories() {
     description: subcategory.description || "",
     status: subcategory.status,
     sort_order: subcategory.sort_order || 0,
-    category: subcategory.category?.name || "Unknown",
+    category: subcategory.category?.name || "ناشناس",
     categoryId: subcategory.category_id,
     createdAt: new Date(subcategory.createdAt).toLocaleDateString(),
-    image: subcategory.image || "",
+    icon: getIconUrl(subcategory.icon || ""),
   }));
 
   const columns = [
     {
       field: "name",
-      headerName: "Name",
+      headerName: "نام",
       width: 200,
     },
     {
       field: "description",
-      headerName: "Description",
+      headerName: "توضیحات",
       width: 300,
       flex: 1,
     },
     {
       field: "category",
-      headerName: "Category",
+      headerName: "دسته‌بندی",
       width: 150,
     },
     {
       field: "status",
-      headerName: "Status",
+      headerName: "وضعیت",
       width: 120,
       renderCell: (params) => (
         <Chip
-          label={params.value}
+          label={params.value === "active" ? "فعال" : "غیرفعال"}
           color={params.value === "active" ? "success" : "error"}
           size="small"
         />
@@ -344,12 +344,12 @@ export default function SubCategories() {
     },
     {
       field: "sort_order",
-      headerName: "Sort Order",
+      headerName: "ترتیب نمایش",
       width: 100,
     },
     {
-      field: "image",
-      headerName: "Image",
+      field: "icon",
+      headerName: "آیکون",
       width: 100,
       renderCell: (params) =>
         params.value ? (
@@ -367,26 +367,26 @@ export default function SubCategories() {
     },
     {
       field: "createdAt",
-      headerName: "Created",
+      headerName: "تاریخ ایجاد",
       width: 120,
     },
     {
       field: "actions",
-      headerName: "Actions",
+      headerName: "عملیات",
       width: 180,
       renderCell: (params) => (
         <Box>
           <IconButton
             color="primary"
             onClick={() => handleOpenDialog(params.row)}
-            title="Edit"
+            title="ویرایش"
           >
             <EditIcon />
           </IconButton>
           <IconButton
             color={params.row.status === "active" ? "warning" : "success"}
             onClick={() => handleToggleStatus(params.row.id)}
-            title={params.row.status === "active" ? "Deactivate" : "Activate"}
+            title={params.row.status === "active" ? "غیرفعال کردن" : "فعال کردن"}
           >
             {params.row.status === "active" ? (
               <ToggleOffIcon />
@@ -397,7 +397,7 @@ export default function SubCategories() {
           <IconButton
             color="error"
             onClick={() => handleDelete(params.row.id)}
-            title="Delete"
+            title="حذف"
           >
             <DeleteIcon />
           </IconButton>
@@ -425,7 +425,7 @@ export default function SubCategories() {
     console.error("Subcategories query error:", error);
     return (
       <Alert severity="error" sx={{ m: 2 }}>
-        Error loading subcategories: {error.message}
+        خطا در بارگذاری زیردسته‌بندی‌ها: {error.message}
       </Alert>
     );
   }
@@ -433,17 +433,17 @@ export default function SubCategories() {
   return (
     <Box sx={{ p: 3 }}>
       <Typography variant="h4" gutterBottom>
-        Subcategories Management
+        مدیریت زیردسته‌بندی‌ها
       </Typography>
 
       {/* Search and Actions */}
       <Card sx={{ mb: 3 }}>
         <CardContent>
-          <Grid container spacing={2} alignItems="center">
+          <Grid container spacing={2} alignItems="center" justifyContent="right">
             <Grid item xs={12} md={4}>
               <TextField
                 fullWidth
-                placeholder="Search subcategories..."
+                placeholder="جستجوی زیردسته‌بندی‌ها..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 InputProps={{
@@ -457,13 +457,13 @@ export default function SubCategories() {
             </Grid>
             <Grid item xs={12} md={2}>
               <FormControl fullWidth>
-                <InputLabel>Category</InputLabel>
+                <InputLabel>دسته‌بندی</InputLabel>
                 <Select
                   value={categoryFilter}
                   onChange={(e) => setCategoryFilter(e.target.value)}
-                  label="Category"
+                  label="دسته‌بندی"
                 >
-                  <MenuItem value="all">All Categories</MenuItem>
+                  <MenuItem value="all">همه دسته‌بندی‌ها</MenuItem>
                   {categories.map((category: Category) => (
                     <MenuItem key={category.id} value={category.id.toString()}>
                       {category.name}
@@ -474,15 +474,15 @@ export default function SubCategories() {
             </Grid>
             <Grid item xs={12} md={2}>
               <FormControl fullWidth>
-                <InputLabel>Status</InputLabel>
+                <InputLabel>وضعیت</InputLabel>
                 <Select
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value)}
-                  label="Status"
+                  label="وضعیت"
                 >
-                  <MenuItem value="all">All Status</MenuItem>
-                  <MenuItem value="active">Active</MenuItem>
-                  <MenuItem value="inactive">Inactive</MenuItem>
+                  <MenuItem value="all">همه وضعیت‌ها</MenuItem>
+                  <MenuItem value="active">فعال</MenuItem>
+                  <MenuItem value="inactive">غیرفعال</MenuItem>
                 </Select>
               </FormControl>
             </Grid>
@@ -493,7 +493,7 @@ export default function SubCategories() {
                 onClick={() => handleOpenDialog()}
                 fullWidth
               >
-                Add Subcategory
+                افزودن زیردسته‌بندی
               </Button>
             </Grid>
           </Grid>
@@ -531,14 +531,14 @@ export default function SubCategories() {
         fullWidth
       >
         <DialogTitle>
-          {editingSubCategory ? "Edit Subcategory" : "Add New Subcategory"}
+          {editingSubCategory ? "ویرایش زیردسته‌بندی" : "افزودن زیردسته‌بندی جدید"}
         </DialogTitle>
         <form onSubmit={handleSubmit}>
           <DialogContent>
             <Grid container spacing={2} sx={{ mt: 1 }}>
               <Grid item xs={12}>
                 <FormControl fullWidth required>
-                  <InputLabel>Category</InputLabel>
+                  <InputLabel>دسته‌بندی</InputLabel>
                   <Select
                     value={formData.category_id}
                     onChange={(e) =>
@@ -547,7 +547,7 @@ export default function SubCategories() {
                         category_id: parseInt(e.target.value) || 0,
                       }))
                     }
-                    label="Category"
+                    label="دسته‌بندی"
                   >
                     {categories.map((category: Category) => (
                       <MenuItem key={category.id} value={category.id}>
@@ -560,7 +560,7 @@ export default function SubCategories() {
               <Grid item xs={12}>
                 <TextField
                   fullWidth
-                  label="Subcategory Name"
+                  label="نام زیردسته‌بندی"
                   name="name"
                   value={formData.name}
                   onChange={handleInputChange}
@@ -570,7 +570,7 @@ export default function SubCategories() {
               <Grid item xs={12}>
                 <TextField
                   fullWidth
-                  label="Description"
+                  label="توضیحات"
                   name="description"
                   value={formData.description}
                   onChange={handleInputChange}
@@ -579,38 +579,43 @@ export default function SubCategories() {
                 />
               </Grid>
 
-              {/* Image Upload */}
+              {/* Icon Selection */}
               <Grid item xs={12}>
-                <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-                  <Button
-                    variant="outlined"
-                    component="label"
-                    startIcon={<ImageIcon />}
-                  >
-                    Upload Image
-                    <input
-                      type="file"
-                      hidden
-                      accept="image/*"
-                      onChange={handleImageChange}
-                      ref={fileInputRef}
-                    />
-                  </Button>
-                  {imagePreview && (
-                    <Avatar
-                      src={imagePreview}
-                      alt="Subcategory preview"
-                      variant="rounded"
-                      sx={{ width: 60, height: 60 }}
-                    />
-                  )}
+                <Typography variant="subtitle1" gutterBottom>
+                  انتخاب آیکون
+                </Typography>
+                <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
+                  {icons.map((icon) => (
+                    <Box
+                      key={icon.name}
+                      sx={{
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "center",
+                        cursor: "pointer",
+                        border: formData.icon === icon.name ? "2px solid" : "1px solid",
+                        borderColor: formData.icon === icon.name ? "primary.main" : "grey.300",
+                        borderRadius: 1,
+                        p: 1,
+                      }}
+                      onClick={() => handleIconChange(icon.name, icon.url)}
+                    >
+                      <Avatar
+                        src={icon.url}
+                        alt={icon.name}
+                        variant="rounded"
+                        sx={{ width: 40, height: 40 }}
+                      />
+                      <Typography variant="caption">{icon.name}</Typography>
+                    </Box>
+                  ))}
                 </Box>
               </Grid>
 
               <Grid item xs={12} sm={6}>
                 <TextField
                   fullWidth
-                  label="Sort Order"
+                  label="ترتیب نمایش"
                   name="sort_order"
                   type="number"
                   value={formData.sort_order}
@@ -620,7 +625,7 @@ export default function SubCategories() {
               </Grid>
               <Grid item xs={12} sm={6}>
                 <FormControl fullWidth>
-                  <InputLabel>Status</InputLabel>
+                  <InputLabel>وضعیت</InputLabel>
                   <Select
                     value={formData.status}
                     onChange={(e) =>
@@ -630,21 +635,21 @@ export default function SubCategories() {
                       }))
                     }
                   >
-                    <MenuItem value="active">Active</MenuItem>
-                    <MenuItem value="inactive">Inactive</MenuItem>
+                    <MenuItem value="active">فعال</MenuItem>
+                    <MenuItem value="inactive">غیرفعال</MenuItem>
                   </Select>
                 </FormControl>
               </Grid>
             </Grid>
           </DialogContent>
           <DialogActions sx={{ p: 2 }}>
-            <Button onClick={handleCloseDialog}>Cancel</Button>
+            <Button onClick={handleCloseDialog}>انصراف</Button>
             <Button
               type="submit"
               variant="contained"
               disabled={createMutation.isPending || updateMutation.isPending}
             >
-              {editingSubCategory ? "Update" : "Create"}
+              {editingSubCategory ? "به‌روزرسانی" : "ایجاد"}
             </Button>
           </DialogActions>
         </form>

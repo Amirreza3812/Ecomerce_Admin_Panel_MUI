@@ -66,6 +66,7 @@ export default function Prices() {
   const [bulkPriceDialogOpen, setBulkPriceDialogOpen] = useState(false);
   const [increasePercentage, setIncreasePercentage] = useState<number>(10);
   const [discountPercentage, setDiscountPercentage] = useState<number>(10);
+  const [discountDuration, setDiscountDuration] = useState<number>(7); // Added duration state
   const [bulkUpdates, setBulkUpdates] = useState<BulkPriceUpdateData>({
     updates: [],
   });
@@ -152,7 +153,7 @@ export default function Prices() {
       setIncreaseDialogOpen(false);
       setSnackbar({
         open: true,
-        message: "Prices increased successfully",
+        message: "قیمت‌ها با موفقیت افزایش یافت",
         severity: "success",
       });
     },
@@ -160,7 +161,7 @@ export default function Prices() {
       console.error("Error increasing prices:", error);
       setSnackbar({
         open: true,
-        message: error.response?.data?.message || "Failed to increase prices",
+        message: error.response?.data?.message || "خطا در افزایش قیمت‌ها",
         severity: "error",
       });
     },
@@ -175,7 +176,7 @@ export default function Prices() {
       setDiscountDialogOpen(false);
       setSnackbar({
         open: true,
-        message: "Discount applied successfully",
+        message: "تخفیف با موفقیت اعمال شد",
         severity: "success",
       });
     },
@@ -183,7 +184,7 @@ export default function Prices() {
       console.error("Error applying discount:", error);
       setSnackbar({
         open: true,
-        message: error.response?.data?.message || "Failed to apply discount",
+        message: error.response?.data?.message || "خطا در اعمال تخفیف",
         severity: "error",
       });
     },
@@ -198,7 +199,7 @@ export default function Prices() {
       setBulkPriceDialogOpen(false);
       setSnackbar({
         open: true,
-        message: "Prices updated successfully",
+        message: "قیمت‌ها با موفقیت به‌روزرسانی شدند",
         severity: "success",
       });
     },
@@ -206,7 +207,7 @@ export default function Prices() {
       console.error("Error updating bulk prices:", error);
       setSnackbar({
         open: true,
-        message: error.response?.data?.message || "Failed to update prices",
+        message: error.response?.data?.message || "خطا در به‌روزرسانی قیمت‌ها",
         severity: "error",
       });
     },
@@ -225,6 +226,7 @@ export default function Prices() {
   const handleApplyDiscount = () => {
     const data: PriceDiscountData = {
       percentage: discountPercentage,
+      duration: discountDuration, // Added duration to the request
     };
     if (selectedCategory) data.categoryId = selectedCategory;
     if (selectedSubcategory) data.subcategoryId = selectedSubcategory;
@@ -247,14 +249,14 @@ export default function Prices() {
 
   const getCategoryName = (categoryId: number): string => {
     const category = categories.find((cat: Category) => cat.id === categoryId);
-    return category ? category.name : "Unknown";
+    return category ? category.name : "ناشناس";
   };
 
   const getSubcategoryName = (subcategoryId: number): string => {
     const subcategory = subcategories.find(
       (sub: SubCategory) => sub.id === subcategoryId
     );
-    return subcategory ? subcategory.name : "Unknown";
+    return subcategory ? subcategory.name : "ناشناس";
   };
 
   const categorySubcategories = subcategories.filter(
@@ -280,7 +282,7 @@ export default function Prices() {
     console.error("Price analytics error:", analyticsError);
     return (
       <Alert severity="error" sx={{ m: 2 }}>
-        Error loading price analytics: {analyticsError.message}
+        خطا در بارگذاری تحلیل قیمت‌ها: {analyticsError.message}
       </Alert>
     );
   }
@@ -288,25 +290,30 @@ export default function Prices() {
   return (
     <Box sx={{ p: 3 }}>
       <Typography variant="h4" gutterBottom>
-        Price Management
+        مدیریت قیمت‌ها
       </Typography>
 
       {/* Filters */}
       <Card sx={{ mb: 3 }}>
         <CardContent>
-          <Grid container spacing={2} alignItems="center">
+          <Grid
+            container
+            spacing={2}
+            alignItems="center"
+            justifyContent="right"
+          >
             <Grid item xs={12} md={4}>
               <FormControl fullWidth>
-                <InputLabel>Category</InputLabel>
+                <InputLabel>دسته‌بندی</InputLabel>
                 <Select
                   value={selectedCategory}
                   onChange={(e) => {
                     setSelectedCategory(parseInt(e.target.value) || 0);
                     setSelectedSubcategory(0);
                   }}
-                  label="Category"
+                  label="دسته‌بندی"
                 >
-                  <MenuItem value={0}>All Categories</MenuItem>
+                  <MenuItem value={0}>همه دسته‌بندی‌ها</MenuItem>
                   {categories.map((category: Category) => (
                     <MenuItem key={category.id} value={category.id}>
                       {category.name}
@@ -317,18 +324,18 @@ export default function Prices() {
             </Grid>
             <Grid item xs={12} md={4}>
               <FormControl fullWidth>
-                <InputLabel>Subcategory</InputLabel>
+                <InputLabel>زیردسته‌بندی</InputLabel>
                 <Select
                   value={selectedSubcategory}
                   onChange={(e) =>
                     setSelectedSubcategory(parseInt(e.target.value) || 0)
                   }
-                  label="Subcategory"
+                  label="زیردسته‌بندی"
                   disabled={
                     !selectedCategory || categorySubcategories.length === 0
                   }
                 >
-                  <MenuItem value={0}>All Subcategories</MenuItem>
+                  <MenuItem value={0}>همه زیردسته‌بندی‌ها</MenuItem>
                   {categorySubcategories.map((subcategory: SubCategory) => (
                     <MenuItem key={subcategory.id} value={subcategory.id}>
                       {subcategory.name}
@@ -347,7 +354,7 @@ export default function Prices() {
                 }}
                 fullWidth
               >
-                Set Bulk Prices
+                تنظیم قیمت‌های عمده
               </Button>
             </Grid>
           </Grid>
@@ -355,12 +362,12 @@ export default function Prices() {
       </Card>
 
       {/* Price Analytics */}
-      <Grid container spacing={3} sx={{ mb: 3 }}>
+      <Grid container spacing={3} sx={{ mb: 3 }} justifyContent="right">
         <Grid item xs={12} sm={6} md={3}>
           <Card>
             <CardContent>
               <Typography variant="h6" color="text.secondary">
-                Total Products
+                مجموع محصولات
               </Typography>
               <Typography variant="h4">
                 {analytics?.overview?.totalProducts || 0}
@@ -372,7 +379,7 @@ export default function Prices() {
           <Card>
             <CardContent>
               <Typography variant="h6" color="text.secondary">
-                Min Price
+                حداقل قیمت
               </Typography>
               <Typography variant="h4">
                 ${analytics?.overview?.minPrice || 0}
@@ -384,7 +391,7 @@ export default function Prices() {
           <Card>
             <CardContent>
               <Typography variant="h6" color="text.secondary">
-                Max Price
+                حداکثر قیمت
               </Typography>
               <Typography variant="h4">
                 ${analytics?.overview?.maxPrice || 0}
@@ -396,7 +403,7 @@ export default function Prices() {
           <Card>
             <CardContent>
               <Typography variant="h6" color="text.secondary">
-                Avg Price
+                میانگین قیمت
               </Typography>
               <Typography variant="h4">
                 ${analytics?.overview?.avgPrice || 0}
@@ -407,16 +414,16 @@ export default function Prices() {
       </Grid>
 
       {/* Price Actions */}
-      <Grid container spacing={3} sx={{ mb: 3 }}>
+      <Grid container spacing={3} sx={{ mb: 3 }} justifyContent="right">
         <Grid item xs={12} md={6}>
-          <Card>
+          <Card sx={{ direction: "rtl" }}>
             <CardContent>
               <Typography variant="h6" gutterBottom>
-                Increase Prices
+                افزایش قیمت‌ها
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                Increase prices by a percentage for selected
-                category/subcategory
+                افزایش قیمت‌ها بر اساس درصد برای دسته‌بندی/زیردسته‌بندی انتخاب
+                شده
               </Typography>
               <Button
                 variant="contained"
@@ -425,19 +432,19 @@ export default function Prices() {
                 onClick={() => setIncreaseDialogOpen(true)}
                 fullWidth
               >
-                Increase Prices
+                افزایش قیمت‌ها
               </Button>
             </CardContent>
           </Card>
         </Grid>
         <Grid item xs={12} md={6}>
-          <Card>
+          <Card sx={{ direction: "rtl" }}>
             <CardContent>
               <Typography variant="h6" gutterBottom>
-                Apply Discount
+                اعمال تخفیف
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                Apply a discount by percentage for selected category/subcategory
+                اعمال تخفیف بر اساس درصد برای دسته‌بندی/زیردسته‌بندی انتخاب شده
               </Typography>
               <Button
                 variant="contained"
@@ -446,7 +453,7 @@ export default function Prices() {
                 onClick={() => setDiscountDialogOpen(true)}
                 fullWidth
               >
-                Apply Discount
+                اعمال تخفیف
               </Button>
             </CardContent>
           </Card>
@@ -456,33 +463,33 @@ export default function Prices() {
       {/* Category Statistics */}
       {analytics?.categoryStats &&
         Object.keys(analytics.categoryStats).length > 0 && (
-          <Card sx={{ mb: 3 }}>
+          <Card sx={{ mb: 3,direction: "rtl" }}>
             <CardContent>
               <Typography variant="h6" gutterBottom>
-                Category Statistics
+                آمار دسته‌بندی‌ها
               </Typography>
               <TableContainer component={Paper}>
                 <Table>
                   <TableHead>
                     <TableRow>
-                      <TableCell>Category</TableCell>
-                      <TableCell align="right">Products</TableCell>
-                      <TableCell align="right">Min Price</TableCell>
-                      <TableCell align="right">Max Price</TableCell>
-                      <TableCell align="right">Avg Price</TableCell>
+                      <TableCell align="center">دسته‌بندی</TableCell>
+                      <TableCell align="center">محصولات</TableCell>
+                      <TableCell align="center">حداقل قیمت</TableCell>
+                      <TableCell align="center">حداکثر قیمت</TableCell>
+                      <TableCell align="center">میانگین قیمت</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
                     {Object.entries(analytics.categoryStats).map(
                       ([categoryName, stats]) => (
                         <TableRow key={categoryName}>
-                          <TableCell>{categoryName}</TableCell>
-                          <TableCell align="right">
+                          <TableCell align="center">{categoryName}</TableCell>
+                          <TableCell align="center">
                             {stats.productCount}
                           </TableCell>
-                          <TableCell align="right">${stats.minPrice}</TableCell>
-                          <TableCell align="right">${stats.maxPrice}</TableCell>
-                          <TableCell align="right">${stats.avgPrice}</TableCell>
+                          <TableCell align="center">${stats.minPrice}</TableCell>
+                          <TableCell align="center">${stats.maxPrice}</TableCell>
+                          <TableCell align="center">${stats.avgPrice}</TableCell>
                         </TableRow>
                       )
                     )}
@@ -498,12 +505,12 @@ export default function Prices() {
         open={increaseDialogOpen}
         onClose={() => setIncreaseDialogOpen(false)}
       >
-        <DialogTitle>Increase Prices</DialogTitle>
+        <DialogTitle>افزایش قیمت‌ها</DialogTitle>
         <DialogContent>
           <TextField
             autoFocus
             margin="dense"
-            label="Percentage"
+            label="درصد"
             type="number"
             fullWidth
             variant="standard"
@@ -517,20 +524,20 @@ export default function Prices() {
           />
           {selectedCategory > 0 && (
             <Typography variant="body2" sx={{ mt: 2 }}>
-              This will apply to: {getCategoryName(selectedCategory)}
+              این تغییر اعمال خواهد شد بر: {getCategoryName(selectedCategory)}
               {selectedSubcategory > 0 &&
                 ` > ${getSubcategoryName(selectedSubcategory)}`}
             </Typography>
           )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setIncreaseDialogOpen(false)}>Cancel</Button>
+          <Button onClick={() => setIncreaseDialogOpen(false)}>انصراف</Button>
           <Button
             onClick={handleIncreasePrices}
             variant="contained"
             disabled={increasePricesMutation.isPending}
           >
-            Increase
+            افزایش
           </Button>
         </DialogActions>
       </Dialog>
@@ -540,12 +547,12 @@ export default function Prices() {
         open={discountDialogOpen}
         onClose={() => setDiscountDialogOpen(false)}
       >
-        <DialogTitle>Apply Discount</DialogTitle>
+        <DialogTitle>اعمال تخفیف</DialogTitle>
         <DialogContent>
           <TextField
             autoFocus
             margin="dense"
-            label="Percentage"
+            label="درصد"
             type="number"
             fullWidth
             variant="standard"
@@ -557,22 +564,35 @@ export default function Prices() {
               endAdornment: <InputAdornment position="end">%</InputAdornment>,
             }}
           />
+          <TextField
+            margin="dense"
+            label="مدت زمان (روز)"
+            type="number"
+            fullWidth
+            variant="standard"
+            value={discountDuration}
+            onChange={(e) => setDiscountDuration(parseInt(e.target.value) || 0)}
+            InputProps={{
+              endAdornment: <InputAdornment position="end">روز</InputAdornment>,
+            }}
+            sx={{ mt: 2 }}
+          />
           {selectedCategory > 0 && (
             <Typography variant="body2" sx={{ mt: 2 }}>
-              This will apply to: {getCategoryName(selectedCategory)}
+              این تغییر اعمال خواهد شد بر: {getCategoryName(selectedCategory)}
               {selectedSubcategory > 0 &&
                 ` > ${getSubcategoryName(selectedSubcategory)}`}
             </Typography>
           )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDiscountDialogOpen(false)}>Cancel</Button>
+          <Button onClick={() => setDiscountDialogOpen(false)}>انصراف</Button>
           <Button
             onClick={handleApplyDiscount}
             variant="contained"
             disabled={applyDiscountMutation.isPending}
           >
-            Apply
+            اعمال
           </Button>
         </DialogActions>
       </Dialog>
@@ -584,18 +604,18 @@ export default function Prices() {
         maxWidth="md"
         fullWidth
       >
-        <DialogTitle>Set Bulk Prices</DialogTitle>
+        <DialogTitle>تنظیم قیمت‌های عمده</DialogTitle>
         <DialogContent>
           <Typography variant="body2" sx={{ mb: 2 }}>
-            Update prices for multiple products at once
+            به‌روزرسانی قیمت‌ها برای چندین محصول به صورت همزمان
           </Typography>
           <TableContainer component={Paper} sx={{ maxHeight: 400 }}>
             <Table stickyHeader>
               <TableHead>
                 <TableRow>
-                  <TableCell>Product</TableCell>
-                  <TableCell align="right">Current Price</TableCell>
-                  <TableCell align="right">New Price</TableCell>
+                  <TableCell>محصول</TableCell>
+                  <TableCell align="right">قیمت فعلی</TableCell>
+                  <TableCell align="right">قیمت جدید</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -605,11 +625,9 @@ export default function Prices() {
                   );
                   return (
                     <TableRow key={update.productId}>
-                      <TableCell>
-                        {product?.name || "Unknown Product"}
-                      </TableCell>
+                      <TableCell>{product?.name || "محصول ناشناس"}</TableCell>
                       <TableCell align="right">
-                        $
+                        ${" "}
                         {typeof product?.price === "string"
                           ? parseFloat(product.price)
                           : product?.price || 0}
@@ -636,13 +654,13 @@ export default function Prices() {
           </TableContainer>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setBulkPriceDialogOpen(false)}>Cancel</Button>
+          <Button onClick={() => setBulkPriceDialogOpen(false)}>انصراف</Button>
           <Button
             onClick={handleSetBulkPrices}
             variant="contained"
             disabled={setBulkPricesMutation.isPending}
           >
-            Update Prices
+            به‌روزرسانی قیمت‌ها
           </Button>
         </DialogActions>
       </Dialog>
@@ -663,10 +681,3 @@ export default function Prices() {
     </Box>
   );
 }
-
-
-// {
-//   "percentage": 15,
-//   "categoryId": 1,
-//   "subcategoryId": 1
-// }

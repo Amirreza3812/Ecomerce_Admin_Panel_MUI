@@ -1,11 +1,12 @@
 // src/services/categoryService.ts
+import { data } from "react-router-dom";
 import apiClient from "./api";
 
 export interface SubCategory {
   id?: number;
   name: string;
   description?: string;
-  image?: string;
+  icon?: string; // Changed from image to icon
   status: "active" | "inactive";
   sort_order: number;
 }
@@ -14,7 +15,7 @@ export interface Category {
   id: number;
   name: string;
   description: string;
-  image: string;
+  icon: string; // Changed from image to icon
   status: "active" | "inactive";
   sort_order: number;
   createdAt: string;
@@ -25,20 +26,31 @@ export interface Category {
 export interface CreateCategoryData {
   name: string;
   description?: string;
-  image?: string;
+  icon?: string; // Changed from image to icon
   status?: "active" | "inactive";
   sort_order?: number;
   subcategories?: SubCategory[];
-  imageFile?: File;
 }
 
-export const createCategory = async (data: FormData): Promise<Category> => {
+export interface IconOption {
+  name: string;
+  url: string;
+}
+
+// Add function to fetch icons
+export const getIcons = async (): Promise<IconOption[]> => {
   try {
-    const response = await apiClient.post("/categories", data, {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
-    });
+    const response = await apiClient.get("/categories/icons");
+    return response.data.data;
+  } catch (error) {
+    console.error("Error fetching icons:", error);
+    throw error;
+  }
+};
+
+export const createCategory = async (data: CreateCategoryData): Promise<Category> => {
+  try {
+    const response = await apiClient.post("/categories", data);
     return response.data.data;
   } catch (error) {
     console.error("Create category API error:", error);
@@ -48,14 +60,10 @@ export const createCategory = async (data: FormData): Promise<Category> => {
 
 export const updateCategory = async (
   id: number,
-  data: FormData
+  data: CreateCategoryData
 ): Promise<Category> => {
   try {
-    const response = await apiClient.put(`/categories/${id}`, data, {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
-    });
+    const response = await apiClient.put(`/categories/${id}`, data);
     return response.data.data;
   } catch (error) {
     console.error("Update category API error:", error);
@@ -95,5 +103,6 @@ export const deleteCategory = async (id: number): Promise<void> => {
 
 export const getCategoryStats = async (): Promise<any> => {
   const response = await apiClient.get("/categories/stats");
+
   return response.data.data;
 };

@@ -54,7 +54,23 @@ const getStatusColor = (status: string) => {
 };
 
 const formatStatus = (status: string) => {
-  return status.charAt(0).toUpperCase() + status.slice(1);
+  // Convert status to Persian
+  switch (status) {
+    case 'pending':
+      return 'در انتظار';
+    case 'confirmed':
+      return 'تأیید شده';
+    case 'preparing':
+      return 'در حال آماده‌سازی';
+    case 'ready':
+      return 'آماده';
+    case 'completed':
+      return 'تکمیل شده';
+    case 'cancelled':
+      return 'لغو شده';
+    default:
+      return status.charAt(0).toUpperCase() + status.slice(1);
+  }
 };
 
 export default function CustomizedDataGrid() {
@@ -80,7 +96,7 @@ export default function CustomizedDataGrid() {
   if (error) {
     return (
       <Alert severity="error" sx={{ mt: 2 }}>
-        Error loading recent orders: {error.message}
+        خطا در بارگذاری سفارشات اخیر: {error.message}
       </Alert>
     );
   }
@@ -105,13 +121,13 @@ export default function CustomizedDataGrid() {
   const columns = [
     { 
       field: 'orderNumber', 
-      headerName: 'Order Number', 
+      headerName: 'شماره سفارش', 
       flex: 1,
       minWidth: 150
     },
     { 
       field: 'customer', 
-      headerName: 'Customer', 
+      headerName: 'مشتری', 
       flex: 1.5,
       minWidth: 200,
       renderCell: (params) => (
@@ -137,13 +153,13 @@ export default function CustomizedDataGrid() {
     },
     { 
       field: 'date', 
-      headerName: 'Date', 
+      headerName: 'تاریخ', 
       flex: 1,
       minWidth: 120
     },
     { 
       field: 'total', 
-      headerName: 'Total', 
+      headerName: 'مجموع', 
       flex: 1,
       minWidth: 100,
       align: 'right',
@@ -152,7 +168,7 @@ export default function CustomizedDataGrid() {
     },
     { 
       field: 'status', 
-      headerName: 'Status', 
+      headerName: 'وضعیت', 
       flex: 1,
       minWidth: 120,
       renderCell: (params) => (
