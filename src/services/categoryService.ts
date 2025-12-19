@@ -1,5 +1,4 @@
 // src/services/categoryService.ts
-import { data } from "react-router-dom";
 import apiClient from "./api";
 
 export interface SubCategory {
@@ -63,7 +62,7 @@ export const updateCategory = async (
   data: CreateCategoryData
 ): Promise<Category> => {
   try {
-    const response = await apiClient.put(`/categories/${id}`, data);
+    const response = await apiClient.patch(`/categories/${id}`, data);
     return response.data.data;
   } catch (error) {
     console.error("Update category API error:", error);

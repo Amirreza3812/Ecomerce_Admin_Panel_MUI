@@ -329,34 +329,74 @@ export default function Products() {
   };
 
   const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  e.preventDefault();
 
-    // Create FormData for file upload
-    const data = new FormData();
+  // Create FormData for file upload
+  const data = new FormData();
 
-    // Add form fields
-    data.append("name", formData.name);
-    if (formData.description) data.append("description", formData.description);
-    data.append("price", formData.price.toString());
-    data.append("category_id", formData.category_id.toString());
-    data.append("subcategory_id", formData.subcategory_id.toString());
-    data.append("status", formData.status);
-    data.append("stock", formData.stock.toString());
-    if (formData.ingredients) data.append("ingredients", formData.ingredients);
+  // Add form fields
+  data.append("name", formData.name);
+  if (formData.description) data.append("description", formData.description);
+  data.append("price", formData.price.toString());
+  data.append("category_id", formData.category_id.toString());
+  data.append("subcategory_id", formData.subcategory_id.toString());
+  data.append("status", formData.status);
+  data.append("stock", formData.stock.toString());
+  if (formData.ingredients) data.append("ingredients", formData.ingredients);
 
-    // Add product image file if selected
+  // Add product image file if selected
+  if (imageFile) {
+    data.append("image", imageFile);
+  }
+
+  if (editingProduct) {
+    // For FormData with PATCH, we need to identify which fields have changed
+    // and only append those to the FormData
+    const changedData = new FormData();
+    
+    // Check each field for changes
+    if (editingProduct.name !== formData.name) {
+      changedData.append("name", formData.name);
+    }
+    
+    if (editingProduct.description !== formData.description) {
+      changedData.append("description", formData.description);
+    }
+    
+    if (editingProduct.price !== formData.price) {
+      changedData.append("price", formData.price.toString());
+    }
+    
+    if (editingProduct.category_id !== formData.category_id) {
+      changedData.append("category_id", formData.category_id.toString());
+    }
+    
+    if (editingProduct.subcategory_id !== formData.subcategory_id) {
+      changedData.append("subcategory_id", formData.subcategory_id.toString());
+    }
+    
+    if (editingProduct.status !== formData.status) {
+      changedData.append("status", formData.status);
+    }
+    
+    if (editingProduct.stock !== formData.stock) {
+      changedData.append("stock", formData.stock.toString());
+    }
+    
+    if (editingProduct.ingredients !== formData.ingredients) {
+      changedData.append("ingredients", formData.ingredients);
+    }
+    
+    // Always include image if a new one is selected
     if (imageFile) {
-      data.append("image", imageFile);
+      changedData.append("image", imageFile);
     }
-
-    if (editingProduct) {
-      // Pass FormData directly to the mutation
-      updateMutation.mutate({ id: editingProduct.id, data });
-    } else {
-      // Pass FormData directly to the mutation
-      createMutation.mutate(data);
-    }
-  };
+    
+    updateMutation.mutate({ id: editingProduct.id, data: changedData });
+  } else {
+    createMutation.mutate(data);
+  }
+};
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>

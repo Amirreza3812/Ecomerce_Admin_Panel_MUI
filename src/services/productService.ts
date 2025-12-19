@@ -80,7 +80,7 @@ export const updateProduct = async (
   data: FormData
 ): Promise<Product> => {
   try {
-    const response = await apiClient.put(`/products/${id}`, data, {
+    const response = await apiClient.patch(`/products/${id}`, data, {
       headers: {
         "Content-Type": "multipart/form-data",
       },

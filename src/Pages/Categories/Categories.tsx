@@ -1,5 +1,5 @@
 // src/Pages/Categories/Categories.tsx
-import { useState, useRef } from "react";
+import { useState } from "react";
 import {
   Box,
   Grid,
@@ -29,9 +29,6 @@ import {
   Fab,
   Divider,
   Avatar,
-  RadioGroup,
-  FormControlLabel,
-  Radio,
 } from "@mui/material";
 import {
   Search as SearchIcon,
@@ -57,6 +54,8 @@ import type {
   SubCategory,
   IconOption,
 } from "../../services/categoryService";
+import { getSubCategoryIcons } from "../../services/subcategoryService";
+
 
 // Extended SubCategory interface to include icon handling
 interface ExtendedSubCategory extends SubCategory {
@@ -104,7 +103,18 @@ export default function Categories() {
     queryFn: getIcons,
   });
 
-  
+  // Fetch subcategory icons separately
+  const { data: subcategoryIcons = [] } = useQuery({
+    queryKey: ["subcategoryIcons"],
+    queryFn: getSubCategoryIcons,
+  });
+
+  // Helper function to find icon URL by name
+  const getIconUrl = (iconName: string, isSubcategory = false) => {
+    const iconList = isSubcategory ? subcategoryIcons : icons;
+    const icon = iconList.find((i) => i.name === iconName);
+    return icon ? icon.url : null;
+  };
 
   const createMutation = useMutation({
     mutationFn: createCategory,
@@ -240,7 +250,7 @@ export default function Categories() {
           icon: sub.icon || "",
           status: sub.status || "active",
           sort_order: sub.sort_order || 0,
-          iconPreview: sub.icon || null,
+          iconPreview: getIconUrl(sub.icon || "", true), // Use subcategory icons
         };
       });
 
@@ -252,7 +262,7 @@ export default function Categories() {
         sort_order: category.sort_order || 0,
         subcategories: extendedSubcategories,
       });
-      setIconPreview(category.icon || null);
+      setIconPreview(getIconUrl(category.icon || "")); // Use category icons
     } else {
       setEditingCategory(null);
       setFormData({
@@ -292,21 +302,75 @@ export default function Categories() {
         return subData;
       }) || [];
 
-    const data = {
-      name: formData.name,
-      description: formData.description,
-      icon: formData.icon,
-      status: formData.status,
-      sort_order: formData.sort_order,
-      subcategories: processedSubcategories,
-    };
-
     if (editingCategory) {
-      updateMutation.mutate({ id: editingCategory.id, data });
+      // Create a data object with only the fields we want to check for changes
+      const changedData: any = {};
+      
+      // Check each field individually
+      if (formData.name !== editingCategory.name) {
+        changedData.name = formData.name;
+      }
+      
+      if (formData.description !== editingCategory.description) {
+        changedData.description = formData.description;
+      }
+      
+      if (formData.icon !== editingCategory.icon) {
+        changedData.icon = formData.icon;
+      }
+      
+      if (formData.status !== editingCategory.status) {
+        changedData.status = formData.status;
+      }
+      
+      if (formData.sort_order !== editingCategory.sort_order) {
+        changedData.sort_order = formData.sort_order;
+      }
+      
+      // Only include subcategories if:
+      // 1. The original category had subcategories AND
+      // 2. We're actually modifying them (not just empty ones from the form)
+      const originalHasSubcategories = editingCategory.subcategories && editingCategory.subcategories.length > 0;
+      const formHasValidSubcategories = processedSubcategories.some(sub => 
+        sub.name || sub.description || sub.icon
+      );
+      
+      console.log('Original has subcategories:', originalHasSubcategories);
+      console.log('Form has valid subcategories:', formHasValidSubcategories);
+      
+      // Only include subcategories if the original had them AND we're modifying them
+      if (originalHasSubcategories && formHasValidSubcategories) {
+        changedData.subcategories = processedSubcategories;
+      }
+      
+      // Debug logging
+      console.log('Final changed data:', changedData);
+      
+      // Only send the data if there are actual changes
+      if (Object.keys(changedData).length > 0) {
+        updateMutation.mutate({ id: editingCategory.id, data: changedData });
+      } else {
+        // No changes to send
+        setSnackbar({
+          open: true,
+          message: "هیچ تغییری برای به‌روزرسانی وجود ندارد",
+          severity: "info",
+        });
+        handleCloseDialog();
+      }
     } else {
-      createMutation.mutate(data);
+      // For creating a new category, include all fields
+      createMutation.mutate({
+        name: formData.name,
+        description: formData.description,
+        icon: formData.icon,
+        status: formData.status,
+        sort_order: formData.sort_order,
+        subcategories: processedSubcategories,
+      });
     }
   };
+
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -406,12 +470,6 @@ export default function Categories() {
     }
   };
 
-   // Helper function to find icon URL by name
-  const getIconUrl = (iconName: string) => {
-    const icon = icons.find((i) => i.name === iconName);
-    return icon ? icon.url : null;
-  };
-
   // Filter categories
   const filteredCategories = categories.filter((category) => {
     const matchesSearch =
@@ -434,7 +492,7 @@ export default function Categories() {
       ? category.subcategories.length
       : 0,
     createdAt: new Date(category.createdAt).toLocaleDateString(),
-    icon: getIconUrl(category.icon || ""),
+    icon: getIconUrl(category.icon || ""), // Use category icons
   }));
 
   const columns = [
@@ -703,12 +761,12 @@ export default function Categories() {
                 />
               </Grid>
 
-              {/* Icon Selection */}
+              {/* Icon Selection for Category */}
               <Grid item xs={12}>
                 <Typography variant="subtitle1" gutterBottom>
-                  انتخاب آیکون
+                  انتخاب آیکون دسته‌بندی
                 </Typography>
-                <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
+                <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, maxHeight: 200, overflowY: "auto" }}>
                   {icons.map((icon) => (
                     <Box
                       key={icon.name}
@@ -827,8 +885,8 @@ export default function Categories() {
                               <Typography variant="subtitle2" gutterBottom>
                                 انتخاب آیکون زیردسته
                               </Typography>
-                              <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
-                                {icons.map((icon) => (
+                              <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, maxHeight: 120, overflowY: "auto" }}>
+                                {subcategoryIcons.map((icon) => (
                                   <Avatar
                                     key={icon.name}
                                     src={icon.url}

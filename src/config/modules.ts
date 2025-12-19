@@ -3,7 +3,7 @@
 // and update ModuleContext.tsx to fetch from the API.
 
 export const modulesConfig = {
-  orders: false,
+  orders: true,
   categories: true,
   products: true,
   banking: false,

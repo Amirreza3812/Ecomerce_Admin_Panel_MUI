@@ -41,7 +41,7 @@ import {
   updateSubCategory,
   deleteSubCategory,
   toggleSubCategoryStatus,
-  getIcons,
+  getSubCategoryIcons,
 } from "../../services/subcategoryService";
 import type {
   SubCategory,
@@ -50,6 +50,7 @@ import type {
 } from "../../services/subcategoryService";
 import { getCategories } from "../../services/categoryService";
 import type { Category } from "../../services/categoryService";
+import { getChangedFields } from "../../utils/apiHelpers";
 
 export default function SubCategories() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -89,10 +90,17 @@ export default function SubCategories() {
     queryFn: getCategories,
   });
 
+  // Use the new subcategory icons endpoint
   const { data: icons = [] } = useQuery({
-    queryKey: ["icons"],
-    queryFn: getIcons,
+    queryKey: ["subcategoryIcons"],
+    queryFn: getSubCategoryIcons,
   });
+
+  // Helper function to find icon URL by name
+  const getIconUrl = (iconName: string) => {
+    const icon = icons.find((i) => i.name === iconName);
+    return icon ? icon.url : null;
+  };
 
   const createMutation = useMutation({
     mutationFn: createSubCategory,
@@ -200,7 +208,7 @@ export default function SubCategories() {
         sort_order: subcategory.sort_order || 0,
         category_id: subcategory.category_id,
       });
-      setIconPreview(subcategory.icon || null);
+      setIconPreview(getIconUrl(subcategory.icon || "")); // Use the helper function
     } else {
       setEditingSubCategory(null);
       setFormData({
@@ -230,18 +238,22 @@ export default function SubCategories() {
     setIconPreview(null);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
 
-    if (editingSubCategory) {
-      updateMutation.mutate({
-        id: editingSubCategory.id,
-        ...formData,
-      });
-    } else {
-      createMutation.mutate(formData);
-    }
-  };
+
+const handleSubmit = (e: React.FormEvent) => {
+  e.preventDefault();
+
+  if (editingSubCategory) {
+    // Only send changed fields for PATCH
+    const changedData = getChangedFields(editingSubCategory, formData);
+    updateMutation.mutate({
+      id: editingSubCategory.id,
+      data: changedData,
+    });
+  } else {
+    createMutation.mutate(formData);
+  }
+};
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -293,13 +305,6 @@ export default function SubCategories() {
     return matchesSearch && matchesStatus && matchesCategory;
   });
 
-    // Helper function to find icon URL by name
-  const getIconUrl = (iconName: string) => {
-    const icon = icons.find((i) => i.name === iconName);
-    return icon ? icon.url : null;
-  };
-
-
   // Transform data for DataGrid
   const rows = filteredSubcategories.map((subcategory) => ({
     id: subcategory.id,
@@ -310,7 +315,7 @@ export default function SubCategories() {
     category: subcategory.category?.name || "ناشناس",
     categoryId: subcategory.category_id,
     createdAt: new Date(subcategory.createdAt).toLocaleDateString(),
-    icon: getIconUrl(subcategory.icon || ""),
+    icon: getIconUrl(subcategory.icon || ""), // Use the helper function
   }));
 
   const columns = [
@@ -579,12 +584,12 @@ export default function SubCategories() {
                 />
               </Grid>
 
-              {/* Icon Selection */}
+              {/* Icon Selection for Subcategory */}
               <Grid item xs={12}>
                 <Typography variant="subtitle1" gutterBottom>
-                  انتخاب آیکون
+                  انتخاب آیکون زیردسته‌بندی
                 </Typography>
-                <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
+                <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, maxHeight: 200, overflowY: "auto" }}>
                   {icons.map((icon) => (
                     <Box
                       key={icon.name}

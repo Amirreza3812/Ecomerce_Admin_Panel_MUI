@@ -31,13 +31,15 @@ export interface IconOption {
   url: string;
 }
 
-// Add function to fetch icons
-export const getIcons = async (): Promise<IconOption[]> => {
+
+
+// Add function to fetch subcategory icons
+export const getSubCategoryIcons = async (): Promise<IconOption[]> => {
   try {
-    const response = await apiClient.get("/categories/icons");
+    const response = await apiClient.get("/subcategories/icons");
     return response.data.data;
   } catch (error) {
-    console.error("Error fetching icons:", error);
+    console.error("Error fetching subcategory icons:", error);
     throw error;
   }
 };
@@ -83,7 +85,7 @@ export const updateSubCategory = async (
   id: number,
   data: CreateSubCategoryData
 ): Promise<SubCategory> => {
-  const response = await apiClient.put(`/subcategories/${id}`, data);
+  const response = await apiClient.patch(`/subcategories/${id}`, data);
   return response.data.data;
 };
 
