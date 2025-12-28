@@ -1,3 +1,4 @@
+// RedirectIfAuth.tsx
 import { Navigate } from "react-router-dom";
 import { useAuth } from "../contexes/AuthContext.tsx";
 
@@ -11,7 +12,8 @@ export default function RedirectIfAuth({
   if (loading) return null; // یا spinner
 
   if (token) {
-    return <Navigate to="/dashboard" replace />;
+    // CHANGED: Updated destination to /admin/dashboard
+    return <Navigate to="/admin/dashboard" replace />;
   }
 
   return <>{children}</>;

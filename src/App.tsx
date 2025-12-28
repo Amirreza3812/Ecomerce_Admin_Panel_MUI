@@ -1,4 +1,5 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+// App.tsx
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom"; // Import Navigate
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AuthProvider } from "./contexes/AuthContext.tsx";
 import { ModuleProvider, useModules } from "./contexes/ModuleContext.tsx";
@@ -6,7 +7,7 @@ import SignIn from "./Pages/Sign_in/SignIn.tsx";
 import Dashboard from "./Pages/Dashboard/DashboardLayout.tsx";
 import ProtectedRoute from "./routes/ProtectedRoute.tsx";
 import RedirectIfAuth from "./routes/RedirectIfAuth.tsx";
-// ... all page imports
+// ... all page imports (Orders, Banking, etc.)
 import Orders from "./Pages/Orders/Orders.tsx";
 import Banking from "./Pages/Banking/Banking.tsx";
 import Categories from "./Pages/Categories/Categories.tsx";
@@ -25,34 +26,46 @@ import MyAccount from "./Pages/MyAccount/MyAccount.tsx";
 const DashboardIndex = () => <MainGrid />;
 const queryClient = new QueryClient();
 
-// We create a wrapper component to use the hook inside the Router
 function AppRoutes() {
-  const { modules, isLoading } = useModules(); // <-- Get modules and loading state
+  const { modules, isLoading } = useModules();
 
   if (isLoading) {
-    return <div>Loading modules...</div>; // Or a spinner component
+    return <div>Loading modules...</div>;
   }
 
   return (
     <Routes>
+      {/* 
+         CHANGED 1: The Root path / now redirects to /admin (Login)
+         This ensures the site doesn't show a blank page at the root.
+      */}
+      <Route path="/" element={<Navigate to="/admin" replace />} />
+
+      {/* 
+         CHANGED 2: Login (SignIn) is now at /admin 
+      */}
       <Route
-        path="/"
+        path="/admin"
         element={
           <RedirectIfAuth>
             <SignIn />
           </RedirectIfAuth>
         }
       />
+
       <Route element={<ProtectedRoute />}>
-        <Route path="/dashboard" element={<Dashboard />}>
+        {/* 
+           Dashboard remains at /admin/dashboard
+        */}
+        <Route path="/admin/dashboard" element={<Dashboard />}>
           <Route index element={<DashboardIndex />} />
 
-          {/* --- CONDITIONAL ROUTES --- */}
-          {/* Only render the route if the corresponding module is enabled */}
+          {/* ... conditionals ... */}
           {modules?.banking && <Route path="banking" element={<Banking />} />}
           {modules?.categories && (
             <Route path="categories" element={<Categories />} />
           )}
+          {/* ... keep the rest of your conditional routes here ... */}
           {modules?.prices && <Route path="prices" element={<Price />} />}
           {modules?.orders && <Route path="orders" element={<Orders />} />}
           {modules?.products && (

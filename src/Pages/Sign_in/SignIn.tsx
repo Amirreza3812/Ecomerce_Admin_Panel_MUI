@@ -112,7 +112,7 @@ export default function SignIn(props: { disableCustomTheme?: boolean }) {
     },
     onSuccess: (data) => {
       login(data.token, data.admin);
-      navigate("/dashboard"); // ریدایرکت به داشبورد
+      navigate("/admin/dashboard"); // ریدایرکت به داشبورد
     },
     onError: (error: any) => {
       setError("password", { message: error.message || "خطا در ورود" });
@@ -220,9 +220,9 @@ export default function SignIn(props: { disableCustomTheme?: boolean }) {
               type="submit"
               fullWidth
               variant="contained"
-              disabled={mutation.isLoading}
+              disabled={mutation.isPending}
             >
-              {mutation.isLoading ? "در حال ورود..." : "ورود"}
+              {mutation.isPending ? "در حال ورود..." : "ورود"}
             </Button>
             <Link
               component="button"

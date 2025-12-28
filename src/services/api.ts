@@ -30,7 +30,7 @@ apiClient.interceptors.response.use(
       // Handle unauthorized access
       localStorage.removeItem('token');
       localStorage.removeItem('admin');
-      window.location.href = '/';
+      window.location.href = '/admin';
     }
     return Promise.reject(error);
   }

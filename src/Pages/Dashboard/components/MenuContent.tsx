@@ -23,84 +23,85 @@ import AccountBalanceIcon from "@mui/icons-material/AccountBalance";
 import { NavLink } from "react-router-dom";
 import { useModules } from "../../../contexes/ModuleContext.tsx";
 
-// The list of items remains the same, with a unique 'key' for each
+// UPDATED PATHS: Added /admin prefix to all paths
 const mainListItems = [
-  { key: "home", text: "Home", icon: <HomeRoundedIcon />, path: "/dashboard" },
+  { key: "home", text: "Home", icon: <HomeRoundedIcon />, path: "/admin/dashboard" },
 
   {
     key: "categories",
     text: "Categories",
     icon: <CategoryIcon />,
-    path: "/dashboard/categories",
+    path: "/admin/dashboard/categories",
   },
   {
     key: "subcategories",
     text: "SubCategories",
     icon: <KeyboardDoubleArrowDownIcon />,
-    path: "/dashboard/subcategories",
+    path: "/admin/dashboard/subcategories",
   },
   {
     key: "products",
     text: "Products",
     icon: <RealEstateAgentIcon />,
-    path: "/dashboard/products",
+    path: "/admin/dashboard/products",
   },
   {
     key: "prices",
     text: "Prices",
     icon: <PriceChangeIcon />,
-    path: "/dashboard/prices",
+    path: "/admin/dashboard/prices",
   },
   {
     key: "orders",
     text: "Orders",
     icon: <AssignmentRoundedIcon />,
-    path: "/dashboard/orders",
+    path: "/admin/dashboard/orders",
   },
   {
     key: "customers",
     text: "Customer",
     icon: <PersonIcon />,
-    path: "/dashboard/customers",
+    path: "/admin/dashboard/customers",
   },
   {
     key: "comments",
     text: "Comment",
     icon: <CommentIcon />,
-    path: "/dashboard/comments",
+    path: "/admin/dashboard/comments",
   },
   {
     key: "banking",
     text: "Banking",
     icon: <AccountBalanceIcon />,
-    path: "/dashboard/banking",
+    path: "/admin/dashboard/banking",
   },
   {
     key: "personnel",
     text: "Personnel",
     icon: <PeopleRoundedIcon />,
-    path: "/dashboard/personnel",
+    path: "/admin/dashboard/personnel",
   },
 ];
 
+// UPDATED PATHS: Added /admin prefix to all paths
 const secondaryListItems = [
   {
     key: "settings",
     text: "Settings",
     icon: <SettingsRoundedIcon />,
-    path: "/dashboard/settings",
+    path: "/admin/dashboard/settings",
   },
   {
     key: "about",
     text: "About",
     icon: <InfoRoundedIcon />,
-    path: "/dashboard/about",
+    path: "/admin/dashboard/about",
   },
   {
     key: "feedback",
     text: "Feedback",
     icon: <HelpRoundedIcon />,
-    path: "/dashboard/feedback",
+    path: "/admin/dashboard/feedback",
   },
 ];
 
@@ -110,20 +111,16 @@ export default function MenuContent() {
   return (
     <Stack sx={{ flexGrow: 1, p: 1, justifyContent: "space-between" }}>
       <List dense>
-        {/* --- CHANGE: We map over the full list and determine disabled status inside --- */}
         {mainListItems.map((item) => {
-          // Determine if this item should be disabled
           const isDisabled =
             item.key === "home" ? false : !(modules && modules[item.key]);
 
           return (
             <ListItem key={item.text} disablePadding sx={{ display: "block" }}>
               <ListItemButton
-                // --- CONDITIONAL PROPS BASED ON isDisabled ---
                 component={isDisabled ? undefined : NavLink}
                 to={isDisabled ? undefined : item.path}
                 disabled={isDisabled}
-                // The 'end' prop for the Home link still works
                 {...(item.text === "Home" && { end: true })}
                 sx={{
                   "&.active": {
@@ -133,7 +130,6 @@ export default function MenuContent() {
                       color: "primary.main",
                     },
                   },
-                  // --- RE-ADD THE DISABLED STYLES ---
                   "&.Mui-disabled": {
                     color: "text.disabled",
                     "& .MuiListItemIcon-root": {
@@ -154,7 +150,6 @@ export default function MenuContent() {
       </List>
 
       <List dense>
-        {/* --- SAME CHANGE FOR THE SECONDARY LIST --- */}
         {secondaryListItems.map((item) => {
           const isDisabled = !(modules && modules[item.key]);
 
