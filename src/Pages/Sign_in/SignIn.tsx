@@ -4,7 +4,6 @@ import {
   Checkbox,
   CssBaseline,
   FormControlLabel,
-  Divider,
   FormLabel,
   FormControl,
   Link,

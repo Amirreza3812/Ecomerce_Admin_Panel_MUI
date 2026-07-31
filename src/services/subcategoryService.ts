@@ -83,7 +83,7 @@ export const createSubCategory = async (
 
 export const updateSubCategory = async (
   id: number,
-  data: CreateSubCategoryData
+  data: Partial<CreateSubCategoryData>
 ): Promise<SubCategory> => {
   const response = await apiClient.patch(`/subcategories/${id}`, data);
   return response.data.data;

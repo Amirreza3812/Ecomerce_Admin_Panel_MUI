@@ -112,15 +112,14 @@ export default function TopProductsChart() {
                 dataKey: "sales",
                 label: "تعداد فروش",
                 color: "#8884d8",
-                valueFormatter: (value: number) => value.toString(),
+                valueFormatter: (value: number | null) =>
+                  (value ?? 0).toString(),
               },
             ]}
             height={250}
             margin={{ top: 0, right: 0, bottom: 0, left: 0 }}
             slotProps={{
-              legend: {
-                hidden: true,
-              },
+              legend: { sx: { display: "none" } },
             }}
             sx={{
               "& .MuiChartsAxis-left .MuiChartsAxis-tickLabel": {
@@ -180,7 +179,8 @@ export default function TopProductsChart() {
                   {item.product.name}
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
-                  {item.totalQuantity} فروخته شده • ${item.totalRevenue.toFixed(2)}
+                  {item.totalQuantity} فروخته شده • $
+                  {item.totalRevenue.toFixed(2)}
                 </Typography>
               </Box>
             </Box>

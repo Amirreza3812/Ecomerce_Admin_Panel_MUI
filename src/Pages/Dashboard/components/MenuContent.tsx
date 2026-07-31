@@ -25,7 +25,12 @@ import { useModules } from "../../../contexes/ModuleContext.tsx";
 
 // UPDATED PATHS: Added /admin prefix to all paths
 const mainListItems = [
-  { key: "home", text: "Home", icon: <HomeRoundedIcon />, path: "/admin/dashboard" },
+  {
+    key: "home",
+    text: "Home",
+    icon: <HomeRoundedIcon />,
+    path: "/admin/dashboard",
+  },
 
   {
     key: "categories",
@@ -113,37 +118,47 @@ export default function MenuContent() {
       <List dense>
         {mainListItems.map((item) => {
           const isDisabled =
-            item.key === "home" ? false : !(modules && modules[item.key]);
+            item.key === "home"
+              ? false
+              : !(modules && modules[item.key as keyof typeof modules]);
+
+          const buttonSx = {
+            "&.active": {
+              backgroundColor: "action.selected",
+              color: "primary.main",
+              "& .MuiListItemIcon-root": {
+                color: "primary.main",
+              },
+            },
+            "&.Mui-disabled": {
+              color: "text.disabled",
+              "& .MuiListItemIcon-root": {
+                color: "text.disabled",
+              },
+              "&:hover": {
+                backgroundColor: "transparent",
+              },
+            },
+          };
 
           return (
             <ListItem key={item.text} disablePadding sx={{ display: "block" }}>
-              <ListItemButton
-                component={isDisabled ? undefined : NavLink}
-                to={isDisabled ? undefined : item.path}
-                disabled={isDisabled}
-                {...(item.text === "Home" && { end: true })}
-                sx={{
-                  "&.active": {
-                    backgroundColor: "action.selected",
-                    color: "primary.main",
-                    "& .MuiListItemIcon-root": {
-                      color: "primary.main",
-                    },
-                  },
-                  "&.Mui-disabled": {
-                    color: "text.disabled",
-                    "& .MuiListItemIcon-root": {
-                      color: "text.disabled",
-                    },
-                    "&:hover": {
-                      backgroundColor: "transparent",
-                    },
-                  },
-                }}
-              >
-                <ListItemIcon>{item.icon}</ListItemIcon>
-                <ListItemText primary={item.text} />
-              </ListItemButton>
+              {isDisabled ? (
+                <ListItemButton disabled sx={buttonSx}>
+                  <ListItemIcon>{item.icon}</ListItemIcon>
+                  <ListItemText primary={item.text} />
+                </ListItemButton>
+              ) : (
+                <ListItemButton
+                  component={NavLink}
+                  to={item.path}
+                  {...(item.text === "Home" ? { end: true } : {})}
+                  sx={buttonSx}
+                >
+                  <ListItemIcon>{item.icon}</ListItemIcon>
+                  <ListItemText primary={item.text} />
+                </ListItemButton>
+              )}
             </ListItem>
           );
         })}
@@ -151,36 +166,46 @@ export default function MenuContent() {
 
       <List dense>
         {secondaryListItems.map((item) => {
-          const isDisabled = !(modules && modules[item.key]);
+          const isDisabled = !(
+            modules && modules[item.key as keyof typeof modules]
+          );
+
+          const buttonSx = {
+            "&.active": {
+              backgroundColor: "action.selected",
+              color: "primary.main",
+              "& .MuiListItemIcon-root": {
+                color: "primary.main",
+              },
+            },
+            "&.Mui-disabled": {
+              color: "text.disabled",
+              "& .MuiListItemIcon-root": {
+                color: "text.disabled",
+              },
+              "&:hover": {
+                backgroundColor: "transparent",
+              },
+            },
+          };
 
           return (
             <ListItem key={item.text} disablePadding sx={{ display: "block" }}>
-              <ListItemButton
-                component={isDisabled ? undefined : NavLink}
-                to={isDisabled ? undefined : item.path}
-                disabled={isDisabled}
-                sx={{
-                  "&.active": {
-                    backgroundColor: "action.selected",
-                    color: "primary.main",
-                    "& .MuiListItemIcon-root": {
-                      color: "primary.main",
-                    },
-                  },
-                  "&.Mui-disabled": {
-                    color: "text.disabled",
-                    "& .MuiListItemIcon-root": {
-                      color: "text.disabled",
-                    },
-                    "&:hover": {
-                      backgroundColor: "transparent",
-                    },
-                  },
-                }}
-              >
-                <ListItemIcon>{item.icon}</ListItemIcon>
-                <ListItemText primary={item.text} />
-              </ListItemButton>
+              {isDisabled ? (
+                <ListItemButton disabled sx={buttonSx}>
+                  <ListItemIcon>{item.icon}</ListItemIcon>
+                  <ListItemText primary={item.text} />
+                </ListItemButton>
+              ) : (
+                <ListItemButton
+                  component={NavLink}
+                  to={item.path}
+                  sx={buttonSx}
+                >
+                  <ListItemIcon>{item.icon}</ListItemIcon>
+                  <ListItemText primary={item.text} />
+                </ListItemButton>
+              )}
             </ListItem>
           );
         })}

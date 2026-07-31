@@ -1,5 +1,6 @@
 // src/Pages/Categories/Categories.tsx
 import { useState } from "react";
+import type { GridRenderCellParams } from "@mui/x-data-grid";
 import {
   Box,
   Grid,
@@ -24,8 +25,6 @@ import {
   CircularProgress,
   List,
   ListItem,
-  ListItemText,
-  ListItemSecondaryAction,
   Fab,
   Divider,
   Avatar,
@@ -52,14 +51,12 @@ import type {
   Category,
   CreateCategoryData,
   SubCategory,
-  IconOption,
 } from "../../services/categoryService";
 import { getSubCategoryIcons } from "../../services/subcategoryService";
 
-
 // Extended SubCategory interface to include icon handling
 interface ExtendedSubCategory extends SubCategory {
-  iconPreview?: string;
+  iconPreview?: string | null;
 }
 
 export default function Categories() {
@@ -79,7 +76,7 @@ export default function Categories() {
   const [snackbar, setSnackbar] = useState({
     open: false,
     message: "",
-    severity: "success" as "success" | "error",
+    severity: "success" as "success" | "error" | "info",
   });
 
   const queryClient = useQueryClient();
@@ -242,7 +239,8 @@ export default function Categories() {
       }
 
       // Convert subcategories to extended format with icon handling
-      const extendedSubcategories = subcategoriesArray.map((sub, index) => {
+      // I delete index from map
+      const extendedSubcategories = subcategoriesArray.map((sub) => {
         return {
           id: sub.id,
           name: sub.name || "",
@@ -305,47 +303,49 @@ export default function Categories() {
     if (editingCategory) {
       // Create a data object with only the fields we want to check for changes
       const changedData: any = {};
-      
+
       // Check each field individually
       if (formData.name !== editingCategory.name) {
         changedData.name = formData.name;
       }
-      
+
       if (formData.description !== editingCategory.description) {
         changedData.description = formData.description;
       }
-      
+
       if (formData.icon !== editingCategory.icon) {
         changedData.icon = formData.icon;
       }
-      
+
       if (formData.status !== editingCategory.status) {
         changedData.status = formData.status;
       }
-      
+
       if (formData.sort_order !== editingCategory.sort_order) {
         changedData.sort_order = formData.sort_order;
       }
-      
+
       // Only include subcategories if:
       // 1. The original category had subcategories AND
       // 2. We're actually modifying them (not just empty ones from the form)
-      const originalHasSubcategories = editingCategory.subcategories && editingCategory.subcategories.length > 0;
-      const formHasValidSubcategories = processedSubcategories.some(sub => 
-        sub.name || sub.description || sub.icon
+      const originalHasSubcategories =
+        editingCategory.subcategories &&
+        editingCategory.subcategories.length > 0;
+      const formHasValidSubcategories = processedSubcategories.some(
+        (sub) => sub.name || sub.description || sub.icon
       );
-      
-      console.log('Original has subcategories:', originalHasSubcategories);
-      console.log('Form has valid subcategories:', formHasValidSubcategories);
-      
+
+      console.log("Original has subcategories:", originalHasSubcategories);
+      console.log("Form has valid subcategories:", formHasValidSubcategories);
+
       // Only include subcategories if the original had them AND we're modifying them
       if (originalHasSubcategories && formHasValidSubcategories) {
         changedData.subcategories = processedSubcategories;
       }
-      
+
       // Debug logging
-      console.log('Final changed data:', changedData);
-      
+      console.log("Final changed data:", changedData);
+
       // Only send the data if there are actual changes
       if (Object.keys(changedData).length > 0) {
         updateMutation.mutate({ id: editingCategory.id, data: changedData });
@@ -370,7 +370,6 @@ export default function Categories() {
       });
     }
   };
-
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -511,7 +510,7 @@ export default function Categories() {
       field: "status",
       headerName: "وضعیت",
       width: 120,
-      renderCell: (params) => (
+      renderCell: (params: GridRenderCellParams) => (
         <Chip
           label={params.value === "active" ? "فعال" : "غیرفعال"}
           color={params.value === "active" ? "success" : "error"}
@@ -533,7 +532,7 @@ export default function Categories() {
       field: "icon",
       headerName: "آیکون",
       width: 100,
-      renderCell: (params) =>
+      renderCell: (params: GridRenderCellParams) =>
         params.value ? (
           <Avatar
             src={params.value}
@@ -556,7 +555,7 @@ export default function Categories() {
       field: "actions",
       headerName: "عملیات",
       width: 120,
-      renderCell: (params) => (
+      renderCell: (params: GridRenderCellParams) => (
         <Box>
           <IconButton
             color="primary"
@@ -609,7 +608,7 @@ export default function Categories() {
 
       {/* Stats Cards */}
       <Grid container spacing={3} sx={{ mb: 3 }} justifyContent="right">
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <Card>
             <CardContent>
               <Typography variant="h6" color="text.secondary">
@@ -621,7 +620,7 @@ export default function Categories() {
             </CardContent>
           </Card>
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <Card>
             <CardContent>
               <Typography variant="h6" color="text.secondary">
@@ -633,7 +632,7 @@ export default function Categories() {
             </CardContent>
           </Card>
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <Card>
             <CardContent>
               <Typography variant="h6" color="text.secondary">
@@ -645,7 +644,7 @@ export default function Categories() {
             </CardContent>
           </Card>
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <Card>
             <CardContent>
               <Typography variant="h6" color="text.secondary">
@@ -660,8 +659,13 @@ export default function Categories() {
       {/* Search and Actions */}
       <Card sx={{ mb: 3 }}>
         <CardContent>
-          <Grid container spacing={2} alignItems="center" justifyContent="right">
-            <Grid item xs={12} md={6}>
+          <Grid
+            container
+            spacing={2}
+            alignItems="center"
+            justifyContent="right"
+          >
+            <Grid size={{ xs: 12, md: 6 }}>
               <TextField
                 fullWidth
                 placeholder="جستجوی دسته‌بندی‌ها..."
@@ -676,7 +680,7 @@ export default function Categories() {
                 }}
               />
             </Grid>
-            <Grid item xs={12} md={3}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <FormControl fullWidth>
                 <Select
                   value={statusFilter}
@@ -689,7 +693,7 @@ export default function Categories() {
                 </Select>
               </FormControl>
             </Grid>
-            <Grid item xs={12} md={3}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <Button
                 variant="contained"
                 startIcon={<AddIcon />}
@@ -739,7 +743,7 @@ export default function Categories() {
         <form onSubmit={handleSubmit}>
           <DialogContent>
             <Grid container spacing={2} sx={{ mt: 1 }}>
-              <Grid item xs={12}>
+              <Grid size={12}>
                 <TextField
                   fullWidth
                   label="نام دسته‌بندی"
@@ -749,7 +753,7 @@ export default function Categories() {
                   required
                 />
               </Grid>
-              <Grid item xs={12}>
+              <Grid size={12}>
                 <TextField
                   fullWidth
                   label="توضیحات"
@@ -762,11 +766,19 @@ export default function Categories() {
               </Grid>
 
               {/* Icon Selection for Category */}
-              <Grid item xs={12}>
+              <Grid size={12}>
                 <Typography variant="subtitle1" gutterBottom>
                   انتخاب آیکون دسته‌بندی
                 </Typography>
-                <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, maxHeight: 200, overflowY: "auto" }}>
+                <Box
+                  sx={{
+                    display: "flex",
+                    flexWrap: "wrap",
+                    gap: 1,
+                    maxHeight: 200,
+                    overflowY: "auto",
+                  }}
+                >
                   {icons.map((icon) => (
                     <Box
                       key={icon.name}
@@ -775,8 +787,14 @@ export default function Categories() {
                         flexDirection: "column",
                         alignItems: "center",
                         cursor: "pointer",
-                        border: formData.icon === icon.name ? "2px solid" : "1px solid",
-                        borderColor: formData.icon === icon.name ? "primary.main" : "grey.300",
+                        border:
+                          formData.icon === icon.name
+                            ? "2px solid"
+                            : "1px solid",
+                        borderColor:
+                          formData.icon === icon.name
+                            ? "primary.main"
+                            : "grey.300",
                         borderRadius: 1,
                         p: 1,
                       }}
@@ -794,7 +812,7 @@ export default function Categories() {
                 </Box>
               </Grid>
 
-              <Grid item xs={12} sm={6}>
+              <Grid size={{ xs: 12, sm: 6 }}>
                 <TextField
                   fullWidth
                   label="ترتیب نمایش"
@@ -805,7 +823,7 @@ export default function Categories() {
                   inputProps={{ min: 0 }}
                 />
               </Grid>
-              <Grid item xs={12} sm={6}>
+              <Grid size={{ xs: 12, sm: 6 }}>
                 <FormControl fullWidth>
                   <InputLabel>وضعیت</InputLabel>
                   <Select
@@ -824,7 +842,7 @@ export default function Categories() {
               </Grid>
 
               {/* Subcategories Section */}
-              <Grid item xs={12}>
+              <Grid size={12}>
                 <Typography variant="h6" gutterBottom>
                   زیردسته‌ها ({formData.subcategories?.length || 0})
                 </Typography>
@@ -834,7 +852,7 @@ export default function Categories() {
                       <Box key={index}>
                         <ListItem>
                           <Grid container spacing={2}>
-                            <Grid item xs={12} sm={3}>
+                            <Grid size={{ xs: 12, sm: 3 }}>
                               <TextField
                                 fullWidth
                                 label="نام"
@@ -849,7 +867,7 @@ export default function Categories() {
                                 size="small"
                               />
                             </Grid>
-                            <Grid item xs={12} sm={3}>
+                            <Grid size={{ xs: 12, sm: 3 }}>
                               <TextField
                                 fullWidth
                                 label="توضیحات"
@@ -864,7 +882,7 @@ export default function Categories() {
                                 size="small"
                               />
                             </Grid>
-                            <Grid item xs={12} sm={2}>
+                            <Grid size={{ xs: 12, sm: 2 }}>
                               <TextField
                                 fullWidth
                                 label="ترتیب نمایش"
@@ -874,18 +892,26 @@ export default function Categories() {
                                   handleSubcategoryChange(
                                     index,
                                     "sort_order",
-                                    parseInt(e.target.value) || 0
+                                    Number(e.target.value) || 0
                                   )
                                 }
                                 size="small"
                                 inputProps={{ min: 0 }}
                               />
                             </Grid>
-                            <Grid item xs={12} sm={5}>
+                            <Grid size={{ xs: 12, sm: 5 }}>
                               <Typography variant="subtitle2" gutterBottom>
                                 انتخاب آیکون زیردسته
                               </Typography>
-                              <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, maxHeight: 120, overflowY: "auto" }}>
+                              <Box
+                                sx={{
+                                  display: "flex",
+                                  flexWrap: "wrap",
+                                  gap: 1,
+                                  maxHeight: 120,
+                                  overflowY: "auto",
+                                }}
+                              >
                                 {subcategoryIcons.map((icon) => (
                                   <Avatar
                                     key={icon.name}
@@ -896,15 +922,29 @@ export default function Categories() {
                                       width: 30,
                                       height: 30,
                                       cursor: "pointer",
-                                      border: (subcategory as ExtendedSubCategory).icon === icon.name ? "2px solid" : "1px solid",
-                                      borderColor: (subcategory as ExtendedSubCategory).icon === icon.name ? "primary.main" : "grey.300",
+                                      border:
+                                        (subcategory as ExtendedSubCategory)
+                                          .icon === icon.name
+                                          ? "2px solid"
+                                          : "1px solid",
+                                      borderColor:
+                                        (subcategory as ExtendedSubCategory)
+                                          .icon === icon.name
+                                          ? "primary.main"
+                                          : "grey.300",
                                     }}
-                                    onClick={() => handleSubcategoryIconChange(index, icon.name, icon.url)}
+                                    onClick={() =>
+                                      handleSubcategoryIconChange(
+                                        index,
+                                        icon.name,
+                                        icon.url
+                                      )
+                                    }
                                   />
                                 ))}
                               </Box>
                             </Grid>
-                            <Grid item xs={12} sm={1}>
+                            <Grid size={{ xs: 12, sm: 1 }}>
                               <IconButton
                                 color="error"
                                 onClick={() => handleRemoveSubcategory(index)}
@@ -924,7 +964,8 @@ export default function Categories() {
                     color="text.secondary"
                     sx={{ py: 2 }}
                   >
-                    هنوز زیردسته‌ای اضافه نشده است. روی دکمه + کلیک کنید تا یکی اضافه کنید.
+                    هنوز زیردسته‌ای اضافه نشده است. روی دکمه + کلیک کنید تا یکی
+                    اضافه کنید.
                   </Typography>
                 )}
                 <Box sx={{ display: "flex", justifyContent: "center", mt: 2 }}>

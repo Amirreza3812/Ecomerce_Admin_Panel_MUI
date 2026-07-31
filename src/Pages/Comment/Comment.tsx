@@ -42,10 +42,7 @@ import {
   Visibility as ViewIcon,
 } from "@mui/icons-material";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import {
-  getComments,
-  moderateComment,
-} from "../../services/commentService";
+import { getComments, moderateComment } from "../../services/commentService";
 import { getProducts } from "../../services/productService";
 import type {
   Comment,
@@ -100,7 +97,7 @@ export default function Comments() {
   const filters: CommentFilters = {
     page,
     limit,
-    status: statusFilter as 'all' | 'pending' | 'approved' | 'rejected',
+    status: statusFilter as "all" | "pending" | "approved" | "rejected",
     rating: ratingFilter || undefined,
     productId: productFilter || undefined,
   };
@@ -119,7 +116,7 @@ export default function Comments() {
   const commentsResponse: CommentResponse = commentsData || {
     comments: [],
     pagination: { total: 0, page: 1, pages: 0, limit: 20 },
-    statistics: { total: 0, pending: 0, approved: 0, rejected: 0 }
+    statistics: { total: 0, pending: 0, approved: 0, rejected: 0 },
   };
 
   const { data: productsData = [] } = useQuery({
@@ -155,7 +152,7 @@ export default function Comments() {
     },
   });
 
-  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
+  const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue);
     // Set status filter based on tab
     if (newValue === 0) setStatusFilter("all");
@@ -164,7 +161,10 @@ export default function Comments() {
     else if (newValue === 3) setStatusFilter("rejected");
   };
 
-  const handlePageChange = (event: React.ChangeEvent<unknown>, value: number) => {
+  const handlePageChange = (
+    event: React.ChangeEvent<unknown>,
+    value: number
+  ) => {
     setPage(value);
   };
 
@@ -178,7 +178,10 @@ export default function Comments() {
     setSelectedComment(comment);
   };
 
-  const handleModerateComment = (comment: Comment, action: 'approve' | 'reject' | 'delete') => {
+  const handleModerateComment = (
+    comment: Comment,
+    action: "approve" | "reject" | "delete"
+  ) => {
     setSelectedComment(comment);
     setModerateDialogOpen(true);
     setAdminNote("");
@@ -188,13 +191,13 @@ export default function Comments() {
     if (!selectedComment) return;
 
     // Determine action based on which button was clicked
-    let action: 'approve' | 'reject' | 'delete' = 'approve';
-    if (selectedComment.status === 'pending') {
-      action = 'approve';
-    } else if (selectedComment.status === 'approved') {
-      action = 'reject';
+    let action: "approve" | "reject" | "delete" = "approve";
+    if (selectedComment.status === "pending") {
+      action = "approve";
+    } else if (selectedComment.status === "approved") {
+      action = "reject";
     } else {
-      action = 'delete';
+      action = "delete";
     }
 
     moderateCommentMutation.mutate({
@@ -206,14 +209,14 @@ export default function Comments() {
   const handleApproveComment = (comment: Comment) => {
     moderateCommentMutation.mutate({
       id: comment.id,
-      data: { action: 'approve', adminNote: "" },
+      data: { action: "approve", adminNote: "" },
     });
   };
 
   const handleRejectComment = (comment: Comment) => {
     moderateCommentMutation.mutate({
       id: comment.id,
-      data: { action: 'reject', adminNote: "" },
+      data: { action: "reject", adminNote: "" },
     });
   };
 
@@ -221,7 +224,7 @@ export default function Comments() {
     if (window.confirm("Are you sure you want to delete this comment?")) {
       moderateCommentMutation.mutate({
         id: comment.id,
-        data: { action: 'delete', adminNote: "" },
+        data: { action: "delete", adminNote: "" },
       });
     }
   };
@@ -233,14 +236,14 @@ export default function Comments() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'approved':
-        return 'success';
-      case 'rejected':
-        return 'error';
-      case 'pending':
-        return 'warning';
+      case "approved":
+        return "success";
+      case "rejected":
+        return "error";
+      case "pending":
+        return "warning";
       default:
-        return 'default';
+        return "default";
     }
   };
 
@@ -276,7 +279,7 @@ export default function Comments() {
 
       {/* Stats Cards */}
       <Grid container spacing={3} sx={{ mb: 3 }}>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <Card>
             <CardContent>
               <Typography variant="h6" color="text.secondary">
@@ -288,7 +291,7 @@ export default function Comments() {
             </CardContent>
           </Card>
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <Card>
             <CardContent>
               <Typography variant="h6" color="text.secondary">
@@ -300,7 +303,7 @@ export default function Comments() {
             </CardContent>
           </Card>
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <Card>
             <CardContent>
               <Typography variant="h6" color="text.secondary">
@@ -312,7 +315,7 @@ export default function Comments() {
             </CardContent>
           </Card>
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <Card>
             <CardContent>
               <Typography variant="h6" color="text.secondary">
@@ -330,7 +333,7 @@ export default function Comments() {
       <Card sx={{ mb: 3 }}>
         <CardContent>
           <Grid container spacing={2} alignItems="center">
-            <Grid item xs={12} md={3}>
+            <Grid size={{ xs: 12, md: 3 }}>
               <TextField
                 fullWidth
                 placeholder="Search comments..."
@@ -345,12 +348,14 @@ export default function Comments() {
                 }}
               />
             </Grid>
-            <Grid item xs={12} md={2}>
+            <Grid size={{ xs: 12, md: 2 }}>
               <FormControl fullWidth>
                 <InputLabel>Product</InputLabel>
                 <Select
                   value={productFilter}
-                  onChange={(e) => setProductFilter(parseInt(e.target.value) || 0)}
+                  onChange={(e) =>
+                    setProductFilter(Number(e.target.value) || 0)
+                  }
                   label="Product"
                 >
                   <MenuItem value={0}>All Products</MenuItem>
@@ -362,12 +367,14 @@ export default function Comments() {
                 </Select>
               </FormControl>
             </Grid>
-            <Grid item xs={12} md={2}>
+            <Grid size={{ xs: 12, md: 2 }}>
               <FormControl fullWidth>
                 <InputLabel>Rating</InputLabel>
                 <Select
                   value={ratingFilter}
-                  onChange={(e) => setRatingFilter(parseInt(e.target.value) || 0)}
+                  onChange={(e) =>
+                    setRatingFilter(Number(e.target.value) || 0)
+                  }
                   label="Rating"
                 >
                   <MenuItem value={0}>All Ratings</MenuItem>
@@ -379,13 +386,13 @@ export default function Comments() {
                 </Select>
               </FormControl>
             </Grid>
-            <Grid item xs={12} md={2}>
+            <Grid size={{ xs: 12, md: 2 }}>
               <FormControl fullWidth>
                 <InputLabel>Items per page</InputLabel>
                 <Select
                   value={limit}
                   onChange={(e) => {
-                    setLimit(parseInt(e.target.value) || 20);
+                    setLimit(Number(e.target.value) || 20);
                     setPage(1); // Reset to first page when changing limit
                   }}
                   label="Items per page"
@@ -396,12 +403,8 @@ export default function Comments() {
                 </Select>
               </FormControl>
             </Grid>
-            <Grid item xs={12} md={3}>
-              <Button
-                variant="contained"
-                onClick={handleSearch}
-                fullWidth
-              >
+            <Grid size={{ xs: 12, md: 3 }}>
+              <Button variant="contained" onClick={handleSearch} fullWidth>
                 Search
               </Button>
             </Grid>
@@ -410,7 +413,7 @@ export default function Comments() {
       </Card>
 
       {/* Tabs for status filtering */}
-      <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
+      <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 3 }}>
         <Tabs value={tabValue} onChange={handleTabChange}>
           <Tab label={`All (${commentsResponse.statistics.total})`} />
           <Tab label={`Pending (${commentsResponse.statistics.pending})`} />
@@ -439,9 +442,17 @@ export default function Comments() {
                 {commentsResponse.comments.map((comment) => (
                   <TableRow key={comment.id}>
                     <TableCell>{getProductName(comment.productId)}</TableCell>
-                    <TableCell>{comment.userName || `User ${comment.userId}`}</TableCell>
                     <TableCell>
-                      <Box sx={{ maxWidth: 300, overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      {comment.userName || `User ${comment.userId}`}
+                    </TableCell>
+                    <TableCell>
+                      <Box
+                        sx={{
+                          maxWidth: 300,
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                        }}
+                      >
                         {comment.content}
                       </Box>
                     </TableCell>
@@ -459,7 +470,7 @@ export default function Comments() {
                       {new Date(comment.createdAt).toLocaleDateString()}
                     </TableCell>
                     <TableCell>
-                      <Box sx={{ display: 'flex' }}>
+                      <Box sx={{ display: "flex" }}>
                         <IconButton
                           color="primary"
                           onClick={() => handleViewComment(comment)}
@@ -467,7 +478,7 @@ export default function Comments() {
                         >
                           <ViewIcon />
                         </IconButton>
-                        {comment.status === 'pending' && (
+                        {comment.status === "pending" && (
                           <>
                             <IconButton
                               color="success"
@@ -503,7 +514,7 @@ export default function Comments() {
       </Card>
 
       {/* Pagination */}
-      <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
+      <Box sx={{ display: "flex", justifyContent: "center", mt: 3 }}>
         <Pagination
           count={commentsResponse.pagination.pages}
           page={commentsResponse.pagination.page}
@@ -524,23 +535,24 @@ export default function Comments() {
           {selectedComment && (
             <Box>
               <Grid container spacing={2} sx={{ mb: 2 }}>
-                <Grid item xs={12} sm={6}>
+                <Grid size={{ xs: 12, sm: 6 }}>
                   <Typography variant="subtitle2">Product</Typography>
                   <Typography variant="body1">
                     {getProductName(selectedComment.productId)}
                   </Typography>
                 </Grid>
-                <Grid item xs={12} sm={6}>
+                <Grid size={{ xs: 12, sm: 6 }}>
                   <Typography variant="subtitle2">User</Typography>
                   <Typography variant="body1">
-                    {selectedComment.userName || `User ${selectedComment.userId}`}
+                    {selectedComment.userName ||
+                      `User ${selectedComment.userId}`}
                   </Typography>
                 </Grid>
-                <Grid item xs={12} sm={6}>
+                <Grid size={{ xs: 12, sm: 6 }}>
                   <Typography variant="subtitle2">Rating</Typography>
                   <Rating value={selectedComment.rating} readOnly />
                 </Grid>
-                <Grid item xs={12} sm={6}>
+                <Grid size={{ xs: 12, sm: 6 }}>
                   <Typography variant="subtitle2">Status</Typography>
                   <Chip
                     label={selectedComment.status}
@@ -548,17 +560,21 @@ export default function Comments() {
                     size="small"
                   />
                 </Grid>
-                <Grid item xs={12}>
+                <Grid size={12} >
                   <Typography variant="subtitle2">Comment</Typography>
-                  <Typography variant="body1">{selectedComment.content}</Typography>
+                  <Typography variant="body1">
+                    {selectedComment.content}
+                  </Typography>
                 </Grid>
                 {selectedComment.adminNote && (
-                  <Grid item xs={12}>
+                  <Grid size={12}>
                     <Typography variant="subtitle2">Admin Note</Typography>
-                    <Typography variant="body1">{selectedComment.adminNote}</Typography>
+                    <Typography variant="body1">
+                      {selectedComment.adminNote}
+                    </Typography>
                   </Grid>
                 )}
-                <Grid item xs={12}>
+                <Grid size={12}>
                   <Typography variant="subtitle2">Date</Typography>
                   <Typography variant="body1">
                     {new Date(selectedComment.createdAt).toLocaleString()}
@@ -570,7 +586,7 @@ export default function Comments() {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setSelectedComment(null)}>Close</Button>
-          {selectedComment && selectedComment.status === 'pending' && (
+          {selectedComment && selectedComment.status === "pending" && (
             <>
               <Button
                 color="success"

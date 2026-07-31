@@ -1,5 +1,6 @@
 // src/Pages/Orders/Orders.tsx
 import { useState } from "react";
+import type { GridRenderCellParams } from "@mui/x-data-grid";
 import {
   Box,
   Grid,
@@ -29,12 +30,16 @@ import {
   getOrderStatusDistribution,
   getSalesChart,
 } from "../../services/dashboardService";
+import type { Dayjs } from "dayjs";
 
 export default function Orders() {
   const [tabValue, setTabValue] = useState(0);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [dateRange, setDateRange] = useState({ start: null, end: null });
+  const [dateRange, setDateRange] = useState<{
+    start: Dayjs | null;
+    end: Dayjs | null;
+  }>({ start: null, end: null });
 
   const {
     data: recentOrders = [],
@@ -55,7 +60,7 @@ export default function Orders() {
     queryFn: () => getSalesChart("month"),
   });
 
-  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
+  const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue);
   };
 
@@ -93,7 +98,7 @@ export default function Orders() {
       field: "status",
       headerName: "Status",
       width: 120,
-      renderCell: (params) => (
+      renderCell: (params: GridRenderCellParams) => (
         <Chip
           label={params.value}
           color={
@@ -123,7 +128,7 @@ export default function Orders() {
         <Card sx={{ mb: 3 }}>
           <CardContent>
             <Grid container spacing={2} alignItems="center">
-              <Grid item xs={12} md={3}>
+              <Grid size={{ xs: 12, md: 3 }}>
                 <TextField
                   fullWidth
                   placeholder="Search orders..."
@@ -138,7 +143,7 @@ export default function Orders() {
                   }}
                 />
               </Grid>
-              <Grid item xs={12} md={2}>
+              <Grid size={{ xs: 12, md: 2 }}>
                 <FormControl fullWidth>
                   <Select
                     value={statusFilter}
@@ -154,7 +159,7 @@ export default function Orders() {
                   </Select>
                 </FormControl>
               </Grid>
-              <Grid item xs={12} md={2}>
+              <Grid size={{ xs: 12, md: 2 }}>
                 <DatePicker
                   label="Start Date"
                   value={dateRange.start}
@@ -164,7 +169,7 @@ export default function Orders() {
                   slotProps={{ textField: { fullWidth: true } }}
                 />
               </Grid>
-              <Grid item xs={12} md={2}>
+              <Grid size={{ xs: 12, md: 2 }}>
                 <DatePicker
                   label="End Date"
                   value={dateRange.end}
@@ -174,7 +179,7 @@ export default function Orders() {
                   slotProps={{ textField: { fullWidth: true } }}
                 />
               </Grid>
-              <Grid item xs={12} md={3}>
+              <Grid size={{ xs: 12, md: 3 }}>
                 <Button variant="contained" fullWidth>
                   Apply Filters
                 </Button>
@@ -215,10 +220,10 @@ export default function Orders() {
 
         {tabValue === 1 && (
           <Grid container spacing={3}>
-            <Grid item xs={12} md={6}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <OrderStatusChart />
             </Grid>
-            <Grid item xs={12} md={6}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <PageViewsBarChart />
             </Grid>
           </Grid>

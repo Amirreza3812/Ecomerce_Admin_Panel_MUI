@@ -17,19 +17,16 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  Chip,
   Alert,
   Snackbar,
   CircularProgress,
   Paper,
-  Divider,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
   TableRow,
-  IconButton,
 } from "@mui/material";
 import {
   TrendingUp as TrendingUpIcon,
@@ -52,7 +49,6 @@ import type { Category } from "../../services/categoryService";
 import type { SubCategory } from "../../services/subcategoryService";
 import type { Product } from "../../services/productService";
 import type {
-  PriceAnalytics,
   PriceIncreaseData,
   PriceDiscountData,
   BulkPriceUpdateData,
@@ -153,7 +149,7 @@ export default function Prices() {
       setIncreaseDialogOpen(false);
       setSnackbar({
         open: true,
-        message: "قیمت‌ها با موفقیت افزایش یافت",
+        message: "قیمت‌ها با موفقیت افزودن یافت",
         severity: "success",
       });
     },
@@ -302,13 +298,13 @@ export default function Prices() {
             alignItems="center"
             justifyContent="right"
           >
-            <Grid item xs={12} md={4}>
+            <Grid size={{ xs: 12, md: 4 }}>
               <FormControl fullWidth>
                 <InputLabel>دسته‌بندی</InputLabel>
                 <Select
                   value={selectedCategory}
                   onChange={(e) => {
-                    setSelectedCategory(parseInt(e.target.value) || 0);
+                    setSelectedCategory(Number(e.target.value) || 0);
                     setSelectedSubcategory(0);
                   }}
                   label="دسته‌بندی"
@@ -322,13 +318,13 @@ export default function Prices() {
                 </Select>
               </FormControl>
             </Grid>
-            <Grid item xs={12} md={4}>
+            <Grid size={{ xs: 12, md: 4 }}>
               <FormControl fullWidth>
                 <InputLabel>زیردسته‌بندی</InputLabel>
                 <Select
                   value={selectedSubcategory}
                   onChange={(e) =>
-                    setSelectedSubcategory(parseInt(e.target.value) || 0)
+                    setSelectedSubcategory(Number(e.target.value) || 0)
                   }
                   label="زیردسته‌بندی"
                   disabled={
@@ -344,7 +340,7 @@ export default function Prices() {
                 </Select>
               </FormControl>
             </Grid>
-            <Grid item xs={12} md={4}>
+            <Grid size={{ xs: 12, md: 4 }}>
               <Button
                 variant="contained"
                 startIcon={<AddIcon />}
@@ -363,7 +359,7 @@ export default function Prices() {
 
       {/* Price Analytics */}
       <Grid container spacing={3} sx={{ mb: 3 }} justifyContent="right">
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <Card>
             <CardContent>
               <Typography variant="h6" color="text.secondary">
@@ -375,7 +371,7 @@ export default function Prices() {
             </CardContent>
           </Card>
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <Card>
             <CardContent>
               <Typography variant="h6" color="text.secondary">
@@ -387,7 +383,7 @@ export default function Prices() {
             </CardContent>
           </Card>
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <Card>
             <CardContent>
               <Typography variant="h6" color="text.secondary">
@@ -399,7 +395,7 @@ export default function Prices() {
             </CardContent>
           </Card>
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <Card>
             <CardContent>
               <Typography variant="h6" color="text.secondary">
@@ -415,7 +411,7 @@ export default function Prices() {
 
       {/* Price Actions */}
       <Grid container spacing={3} sx={{ mb: 3 }} justifyContent="right">
-        <Grid item xs={12} md={6}>
+        <Grid size={{ xs: 12, md: 6 }}>
           <Card sx={{ direction: "rtl" }}>
             <CardContent>
               <Typography variant="h6" gutterBottom>
@@ -437,7 +433,7 @@ export default function Prices() {
             </CardContent>
           </Card>
         </Grid>
-        <Grid item xs={12} md={6}>
+        <Grid size={{ xs: 12, md: 6 }}>
           <Card sx={{ direction: "rtl" }}>
             <CardContent>
               <Typography variant="h6" gutterBottom>
@@ -463,7 +459,7 @@ export default function Prices() {
       {/* Category Statistics */}
       {analytics?.categoryStats &&
         Object.keys(analytics.categoryStats).length > 0 && (
-          <Card sx={{ mb: 3,direction: "rtl" }}>
+          <Card sx={{ mb: 3, direction: "rtl" }}>
             <CardContent>
               <Typography variant="h6" gutterBottom>
                 آمار دسته‌بندی‌ها
@@ -487,9 +483,15 @@ export default function Prices() {
                           <TableCell align="center">
                             {stats.productCount}
                           </TableCell>
-                          <TableCell align="center">${stats.minPrice}</TableCell>
-                          <TableCell align="center">${stats.maxPrice}</TableCell>
-                          <TableCell align="center">${stats.avgPrice}</TableCell>
+                          <TableCell align="center">
+                            ${stats.minPrice}
+                          </TableCell>
+                          <TableCell align="center">
+                            ${stats.maxPrice}
+                          </TableCell>
+                          <TableCell align="center">
+                            ${stats.avgPrice}
+                          </TableCell>
                         </TableRow>
                       )
                     )}
@@ -515,9 +517,7 @@ export default function Prices() {
             fullWidth
             variant="standard"
             value={increasePercentage}
-            onChange={(e) =>
-              setIncreasePercentage(parseInt(e.target.value) || 0)
-            }
+            onChange={(e) => setIncreasePercentage(Number(e.target.value) || 0)}
             InputProps={{
               endAdornment: <InputAdornment position="end">%</InputAdornment>,
             }}
@@ -557,9 +557,7 @@ export default function Prices() {
             fullWidth
             variant="standard"
             value={discountPercentage}
-            onChange={(e) =>
-              setDiscountPercentage(parseInt(e.target.value) || 0)
-            }
+            onChange={(e) => setDiscountPercentage(Number(e.target.value) || 0)}
             InputProps={{
               endAdornment: <InputAdornment position="end">%</InputAdornment>,
             }}
@@ -571,7 +569,7 @@ export default function Prices() {
             fullWidth
             variant="standard"
             value={discountDuration}
-            onChange={(e) => setDiscountDuration(parseInt(e.target.value) || 0)}
+            onChange={(e) => setDiscountDuration(Number(e.target.value) || 0)}
             InputProps={{
               endAdornment: <InputAdornment position="end">روز</InputAdornment>,
             }}

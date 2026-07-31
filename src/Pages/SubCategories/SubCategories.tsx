@@ -1,5 +1,6 @@
 // src/Pages/SubCategories/SubCategories.tsx
-import { useState, useRef } from "react";
+import { useState } from "react";
+import type { GridRenderCellParams } from "@mui/x-data-grid";
 import {
   Box,
   Grid,
@@ -46,7 +47,6 @@ import {
 import type {
   SubCategory,
   CreateSubCategoryData,
-  IconOption,
 } from "../../services/subcategoryService";
 import { getCategories } from "../../services/categoryService";
 import type { Category } from "../../services/categoryService";
@@ -127,8 +127,13 @@ export default function SubCategories() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, ...data }: { id: number } & CreateSubCategoryData) =>
-      updateSubCategory(id, data),
+    mutationFn: ({
+      id,
+      data,
+    }: {
+      id: number;
+      data: Partial<CreateSubCategoryData>;
+    }) => updateSubCategory(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["subcategories"] });
       handleCloseDialog();
@@ -238,22 +243,20 @@ export default function SubCategories() {
     setIconPreview(null);
   };
 
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
 
-
-const handleSubmit = (e: React.FormEvent) => {
-  e.preventDefault();
-
-  if (editingSubCategory) {
-    // Only send changed fields for PATCH
-    const changedData = getChangedFields(editingSubCategory, formData);
-    updateMutation.mutate({
-      id: editingSubCategory.id,
-      data: changedData,
-    });
-  } else {
-    createMutation.mutate(formData);
-  }
-};
+    if (editingSubCategory) {
+      // Only send changed fields for PATCH
+      const changedData = getChangedFields(editingSubCategory, formData);
+      updateMutation.mutate({
+        id: editingSubCategory.id,
+        data: changedData,
+      });
+    } else {
+      createMutation.mutate(formData);
+    }
+  };
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -339,7 +342,7 @@ const handleSubmit = (e: React.FormEvent) => {
       field: "status",
       headerName: "وضعیت",
       width: 120,
-      renderCell: (params) => (
+      renderCell: (params: GridRenderCellParams) => (
         <Chip
           label={params.value === "active" ? "فعال" : "غیرفعال"}
           color={params.value === "active" ? "success" : "error"}
@@ -356,7 +359,7 @@ const handleSubmit = (e: React.FormEvent) => {
       field: "icon",
       headerName: "آیکون",
       width: 100,
-      renderCell: (params) =>
+      renderCell: (params: GridRenderCellParams) =>
         params.value ? (
           <Avatar
             src={params.value}
@@ -379,7 +382,7 @@ const handleSubmit = (e: React.FormEvent) => {
       field: "actions",
       headerName: "عملیات",
       width: 180,
-      renderCell: (params) => (
+      renderCell: (params: GridRenderCellParams) => (
         <Box>
           <IconButton
             color="primary"
@@ -391,7 +394,9 @@ const handleSubmit = (e: React.FormEvent) => {
           <IconButton
             color={params.row.status === "active" ? "warning" : "success"}
             onClick={() => handleToggleStatus(params.row.id)}
-            title={params.row.status === "active" ? "غیرفعال کردن" : "فعال کردن"}
+            title={
+              params.row.status === "active" ? "غیرفعال کردن" : "فعال کردن"
+            }
           >
             {params.row.status === "active" ? (
               <ToggleOffIcon />
@@ -444,8 +449,13 @@ const handleSubmit = (e: React.FormEvent) => {
       {/* Search and Actions */}
       <Card sx={{ mb: 3 }}>
         <CardContent>
-          <Grid container spacing={2} alignItems="center" justifyContent="right">
-            <Grid item xs={12} md={4}>
+          <Grid
+            container
+            spacing={2}
+            alignItems="center"
+            justifyContent="right"
+          >
+            <Grid size={{ xs: 12, md: 4 }}>
               <TextField
                 fullWidth
                 placeholder="جستجوی زیردسته‌بندی‌ها..."
@@ -460,7 +470,7 @@ const handleSubmit = (e: React.FormEvent) => {
                 }}
               />
             </Grid>
-            <Grid item xs={12} md={2}>
+            <Grid size={{ xs: 12, md: 2 }}>
               <FormControl fullWidth>
                 <InputLabel>دسته‌بندی</InputLabel>
                 <Select
@@ -477,7 +487,7 @@ const handleSubmit = (e: React.FormEvent) => {
                 </Select>
               </FormControl>
             </Grid>
-            <Grid item xs={12} md={2}>
+            <Grid size={{ xs: 12, md: 2 }}>
               <FormControl fullWidth>
                 <InputLabel>وضعیت</InputLabel>
                 <Select
@@ -491,7 +501,7 @@ const handleSubmit = (e: React.FormEvent) => {
                 </Select>
               </FormControl>
             </Grid>
-            <Grid item xs={12} md={4}>
+            <Grid size={{ xs: 12, md: 4 }}>
               <Button
                 variant="contained"
                 startIcon={<AddIcon />}
@@ -536,20 +546,22 @@ const handleSubmit = (e: React.FormEvent) => {
         fullWidth
       >
         <DialogTitle>
-          {editingSubCategory ? "ویرایش زیردسته‌بندی" : "افزودن زیردسته‌بندی جدید"}
+          {editingSubCategory
+            ? "ویرایش زیردسته‌بندی"
+            : "افزودن زیردسته‌بندی جدید"}
         </DialogTitle>
         <form onSubmit={handleSubmit}>
           <DialogContent>
             <Grid container spacing={2} sx={{ mt: 1 }}>
-              <Grid item xs={12}>
+              <Grid size={12}>
                 <FormControl fullWidth required>
                   <InputLabel>دسته‌بندی</InputLabel>
                   <Select
-                    value={formData.category_id}
+                    value={formData.category_id || ""}
                     onChange={(e) =>
                       setFormData((prev) => ({
                         ...prev,
-                        category_id: parseInt(e.target.value) || 0,
+                        category_id: Number(e.target.value) || 0,
                       }))
                     }
                     label="دسته‌بندی"
@@ -562,7 +574,7 @@ const handleSubmit = (e: React.FormEvent) => {
                   </Select>
                 </FormControl>
               </Grid>
-              <Grid item xs={12}>
+              <Grid size={12}>
                 <TextField
                   fullWidth
                   label="نام زیردسته‌بندی"
@@ -572,7 +584,7 @@ const handleSubmit = (e: React.FormEvent) => {
                   required
                 />
               </Grid>
-              <Grid item xs={12}>
+              <Grid size={12}>
                 <TextField
                   fullWidth
                   label="توضیحات"
@@ -585,11 +597,19 @@ const handleSubmit = (e: React.FormEvent) => {
               </Grid>
 
               {/* Icon Selection for Subcategory */}
-              <Grid item xs={12}>
+              <Grid size={12}>
                 <Typography variant="subtitle1" gutterBottom>
                   انتخاب آیکون زیردسته‌بندی
                 </Typography>
-                <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, maxHeight: 200, overflowY: "auto" }}>
+                <Box
+                  sx={{
+                    display: "flex",
+                    flexWrap: "wrap",
+                    gap: 1,
+                    maxHeight: 200,
+                    overflowY: "auto",
+                  }}
+                >
                   {icons.map((icon) => (
                     <Box
                       key={icon.name}
@@ -598,8 +618,14 @@ const handleSubmit = (e: React.FormEvent) => {
                         flexDirection: "column",
                         alignItems: "center",
                         cursor: "pointer",
-                        border: formData.icon === icon.name ? "2px solid" : "1px solid",
-                        borderColor: formData.icon === icon.name ? "primary.main" : "grey.300",
+                        border:
+                          formData.icon === icon.name
+                            ? "2px solid"
+                            : "1px solid",
+                        borderColor:
+                          formData.icon === icon.name
+                            ? "primary.main"
+                            : "grey.300",
                         borderRadius: 1,
                         p: 1,
                       }}
@@ -617,7 +643,7 @@ const handleSubmit = (e: React.FormEvent) => {
                 </Box>
               </Grid>
 
-              <Grid item xs={12} sm={6}>
+              <Grid size={{ xs: 12, sm: 6 }}>
                 <TextField
                   fullWidth
                   label="ترتیب نمایش"
@@ -628,7 +654,7 @@ const handleSubmit = (e: React.FormEvent) => {
                   inputProps={{ min: 0 }}
                 />
               </Grid>
-              <Grid item xs={12} sm={6}>
+              <Grid size={{ xs: 12, sm: 6 }}>
                 <FormControl fullWidth>
                   <InputLabel>وضعیت</InputLabel>
                   <Select

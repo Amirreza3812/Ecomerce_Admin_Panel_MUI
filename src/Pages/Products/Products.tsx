@@ -1,5 +1,6 @@
 // src/Pages/Products/Products.tsx
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
+import type { GridRenderCellParams, GridColDef } from "@mui/x-data-grid";
 import {
   Box,
   Grid,
@@ -47,17 +48,12 @@ import {
 } from "../../services/productService";
 import { getCategories } from "../../services/categoryService";
 import { getSubCategories } from "../../services/subcategoryService";
-import type {
-  Product,
-  CreateProductData,
-} from "../../services/productService";
-import type { Category } from "../../services/categoryService";
-import type { SubCategory } from "../../services/subcategoryService";
+import type { Product, CreateProductData } from "../../services/productService";
 
 export default function Products() {
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-  
+  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [categoryFilter, setCategoryFilter] = useState("all");
@@ -105,9 +101,9 @@ export default function Products() {
 
   // Ensure categories is always an array
   const categories = Array.isArray(categoriesData) ? categoriesData : [];
-  
+
   // Debug: Log categories data
-  console.log('Categories data:', categories);
+  console.log("Categories data:", categories);
 
   // Fetch subcategories separately
   const { data: subcategoriesData } = useQuery({
@@ -116,7 +112,9 @@ export default function Products() {
   });
 
   // Ensure subcategories is always an array
-  const subcategories = Array.isArray(subcategoriesData) ? subcategoriesData : [];
+  const subcategories = Array.isArray(subcategoriesData)
+    ? subcategoriesData
+    : [];
 
   const { data: stats, isLoading: isStatsLoading } = useQuery({
     queryKey: ["productStats"],
@@ -126,8 +124,8 @@ export default function Products() {
   // Create a helper function to get category name by ID
   const getCategoryName = (categoryId: number): string => {
     console.log(`Looking for category with ID: ${categoryId}`);
-    console.log('Available categories:', categories);
-    const category = categories.find(cat => cat.id === categoryId);
+    console.log("Available categories:", categories);
+    const category = categories.find((cat) => cat.id === categoryId);
     const categoryName = category ? category.name : "ناشناس";
     console.log(`Found category name: ${categoryName}`);
     return categoryName;
@@ -135,7 +133,7 @@ export default function Products() {
 
   // Create a helper function to get subcategory name by ID
   const getSubcategoryName = (subcategoryId: number): string => {
-    const subcategory = subcategories.find(sub => sub.id === subcategoryId);
+    const subcategory = subcategories.find((sub) => sub.id === subcategoryId);
     return subcategory ? subcategory.name : "ناشناس";
   };
 
@@ -242,9 +240,7 @@ export default function Products() {
       setSnackbar({
         open: true,
         message:
-          error.response?.data?.message ||
-          error.message ||
-          "خطا در حذف محصول",
+          error.response?.data?.message || error.message || "خطا در حذف محصول",
         severity: "error",
       });
     },
@@ -282,7 +278,10 @@ export default function Products() {
       setFormData({
         name: product.name,
         description: product.description,
-        price: typeof product.price === 'string' ? parseFloat(product.price) : product.price,
+        price:
+          typeof product.price === "string"
+            ? parseFloat(product.price)
+            : product.price,
         category_id: product.category_id,
         subcategory_id: product.subcategory_id,
         image: product.image,
@@ -329,81 +328,89 @@ export default function Products() {
   };
 
   const handleSubmit = (e: React.FormEvent) => {
-  e.preventDefault();
+    e.preventDefault();
 
-  // Create FormData for file upload
-  const data = new FormData();
+    // Create FormData for file upload
+    const data = new FormData();
 
-  // Add form fields
-  data.append("name", formData.name);
-  if (formData.description) data.append("description", formData.description);
-  data.append("price", formData.price.toString());
-  data.append("category_id", formData.category_id.toString());
-  data.append("subcategory_id", formData.subcategory_id.toString());
-  data.append("status", formData.status);
-  data.append("stock", formData.stock.toString());
-  if (formData.ingredients) data.append("ingredients", formData.ingredients);
+    // Add form fields
+    data.append("name", formData.name);
+    if (formData.description) data.append("description", formData.description);
+    data.append("price", formData.price.toString());
+    data.append("category_id", formData.category_id.toString());
+    data.append("subcategory_id", formData.subcategory_id.toString());
+    data.append("status", formData.status ?? "active");
+    data.append("stock", String(formData.stock ?? 0));
+    if (formData.ingredients) data.append("ingredients", formData.ingredients);
 
-  // Add product image file if selected
-  if (imageFile) {
-    data.append("image", imageFile);
-  }
-
-  if (editingProduct) {
-    // For FormData with PATCH, we need to identify which fields have changed
-    // and only append those to the FormData
-    const changedData = new FormData();
-    
-    // Check each field for changes
-    if (editingProduct.name !== formData.name) {
-      changedData.append("name", formData.name);
-    }
-    
-    if (editingProduct.description !== formData.description) {
-      changedData.append("description", formData.description);
-    }
-    
-    if (editingProduct.price !== formData.price) {
-      changedData.append("price", formData.price.toString());
-    }
-    
-    if (editingProduct.category_id !== formData.category_id) {
-      changedData.append("category_id", formData.category_id.toString());
-    }
-    
-    if (editingProduct.subcategory_id !== formData.subcategory_id) {
-      changedData.append("subcategory_id", formData.subcategory_id.toString());
-    }
-    
-    if (editingProduct.status !== formData.status) {
-      changedData.append("status", formData.status);
-    }
-    
-    if (editingProduct.stock !== formData.stock) {
-      changedData.append("stock", formData.stock.toString());
-    }
-    
-    if (editingProduct.ingredients !== formData.ingredients) {
-      changedData.append("ingredients", formData.ingredients);
-    }
-    
-    // Always include image if a new one is selected
+    // Add product image file if selected
     if (imageFile) {
-      changedData.append("image", imageFile);
+      data.append("image", imageFile);
     }
-    
-    updateMutation.mutate({ id: editingProduct.id, data: changedData });
-  } else {
-    createMutation.mutate(data);
-  }
-};
+
+    if (editingProduct) {
+      // For FormData with PATCH, we need to identify which fields have changed
+      // and only append those to the FormData
+      const changedData = new FormData();
+
+      // Check each field for changes
+      if (editingProduct.name !== formData.name) {
+        changedData.append("name", formData.name);
+      }
+
+      if (editingProduct.description !== formData.description) {
+        changedData.append("description", formData.description ?? "");
+      }
+
+      if (editingProduct.price !== formData.price) {
+        changedData.append("price", formData.price.toString());
+      }
+
+      if (editingProduct.category_id !== formData.category_id) {
+        changedData.append("category_id", formData.category_id.toString());
+      }
+
+      if (editingProduct.subcategory_id !== formData.subcategory_id) {
+        changedData.append(
+          "subcategory_id",
+          formData.subcategory_id.toString()
+        );
+      }
+
+      if (editingProduct.status !== formData.status) {
+        changedData.append("status", formData.status ?? "active");
+      }
+
+      if (editingProduct.stock !== formData.stock) {
+        changedData.append("stock", String(formData.stock ?? 0));
+      }
+
+      if (editingProduct.ingredients !== formData.ingredients) {
+        changedData.append("ingredients", formData.ingredients ?? "");
+      }
+
+      // Always include image if a new one is selected
+      if (imageFile) {
+        changedData.append("image", imageFile);
+      }
+
+      updateMutation.mutate({ id: editingProduct.id, data: changedData });
+    } else {
+      createMutation.mutate(data);
+    }
+  };
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     const { name, value } = e.target;
 
-    if (name === "price" || name === "stock" || name === "category_id" || name === "subcategory_id") {
+    if (
+      name === "price" ||
+      name === "stock" ||
+      name === "category_id" ||
+      name === "subcategory_id"
+    ) {
       setFormData((prev) => ({
         ...prev,
         [name]: value === "" ? 0 : parseFloat(value) || 0,
@@ -438,7 +445,9 @@ export default function Products() {
   };
 
   // Get subcategories for selected category
-  const categorySubcategories = subcategories.filter(sub => sub.category_id === formData.category_id);
+  const categorySubcategories = subcategories.filter(
+    (sub) => sub.category_id === formData.category_id
+  );
 
   // Filter products
   const filteredProducts = products.filter((product) => {
@@ -449,20 +458,24 @@ export default function Products() {
     const matchesStatus =
       statusFilter === "all" || product.status === statusFilter;
     const matchesCategory =
-      categoryFilter === "all" || product.category_id.toString() === categoryFilter;
+      categoryFilter === "all" ||
+      product.category_id.toString() === categoryFilter;
     return matchesSearch && matchesStatus && matchesCategory;
   });
 
   // Transform data for DataGrid with category and subcategory names
   const rows = filteredProducts.map((product) => {
     // Debug: Log product data
-    console.log('Processing product:', product);
-    
+    console.log("Processing product:", product);
+
     return {
       id: product.id,
       name: product.name,
       description: product.description || "",
-      price: typeof product.price === 'string' ? parseFloat(product.price) : product.price,
+      price:
+        typeof product.price === "string"
+          ? parseFloat(product.price)
+          : product.price,
       category_name: getCategoryName(product.category_id),
       subcategory_name: getSubcategoryName(product.subcategory_id),
       status: product.status,
@@ -473,8 +486,8 @@ export default function Products() {
   });
 
   // Define columns based on screen size
-  const getColumns = () => {
-    const baseColumns = [
+  const getColumns = (): GridColDef[] => {
+    const baseColumns: GridColDef[] = [
       {
         field: "name",
         headerName: "نام",
@@ -485,13 +498,13 @@ export default function Products() {
         field: "price",
         headerName: "قیمت",
         width: isMobile ? 70 : 80,
-        renderCell: (params) => `$${params.value}`,
+        renderCell: (params: GridRenderCellParams) => `$${params.value}`,
       },
       {
         field: "status",
         headerName: "وضعیت",
         width: isMobile ? 70 : 80,
-        renderCell: (params) => (
+        renderCell: (params: GridRenderCellParams) => (
           <Chip
             label={params.value === "active" ? "فعال" : "غیرفعال"}
             color={params.value === "active" ? "success" : "error"}
@@ -503,7 +516,7 @@ export default function Products() {
         field: "stock",
         headerName: "موجودی",
         width: isMobile ? 70 : 80,
-        renderCell: (params) => (
+        renderCell: (params: GridRenderCellParams) => (
           <Chip
             label={params.value}
             color={params.value > 0 ? "primary" : "error"}
@@ -529,7 +542,7 @@ export default function Products() {
           field: "image",
           headerName: "تصویر",
           width: 80,
-          renderCell: (params) =>
+          renderCell: (params: GridRenderCellParams) =>
             params.value ? (
               <Avatar
                 src={params.value}
@@ -550,7 +563,7 @@ export default function Products() {
       field: "actions",
       headerName: "عملیات",
       width: isMobile ? 150 : 180,
-      renderCell: (params) => (
+      renderCell: (params: GridRenderCellParams) => (
         <Box>
           <IconButton
             color="primary"
@@ -611,38 +624,39 @@ export default function Products() {
   }
 
   return (
-    <Box sx={{ p: isMobile ? 1 : 3, maxWidth: 'calc(100vw - 280px)' }}>
+    <Box sx={{ p: isMobile ? 1 : 3, maxWidth: "calc(100vw - 280px)" }}>
       <Typography variant={isMobile ? "h5" : "h4"} gutterBottom>
         مدیریت محصولات
       </Typography>
 
       {/* Stats Cards */}
-      <Grid container spacing={isMobile ? 1 : 3} sx={{ mb: 3 }} justifyContent="right">
-        <Grid item xs={6} sm={3}>
+      <Grid
+        container
+        spacing={isMobile ? 1 : 3}
+        sx={{ mb: 3 }}
+        justifyContent="right"
+      >
+        <Grid size={{ xs: 6, sm: 3 }}>
           <Card>
             <CardContent sx={{ p: isMobile ? 1 : 2 }}>
               <Typography variant="h6" color="text.secondary">
                 مجموع محصولات
               </Typography>
-              <Typography variant="h4">
-                {stats?.totalProducts || 0}
-              </Typography>
+              <Typography variant="h4">{stats?.totalProducts || 0}</Typography>
             </CardContent>
           </Card>
         </Grid>
-        <Grid item xs={6} sm={3}>
+        <Grid size={{ xs: 6, sm: 3 }}>
           <Card>
             <CardContent sx={{ p: isMobile ? 1 : 2 }}>
               <Typography variant="h6" color="text.secondary">
                 محصولات فعال
               </Typography>
-              <Typography variant="h4">
-                {stats?.activeProducts || 0}
-              </Typography>
+              <Typography variant="h4">{stats?.activeProducts || 0}</Typography>
             </CardContent>
           </Card>
         </Grid>
-        <Grid item xs={6} sm={3}>
+        <Grid size={{ xs: 6, sm: 3 }}>
           <Card>
             <CardContent sx={{ p: isMobile ? 1 : 2 }}>
               <Typography variant="h6" color="text.secondary">
@@ -654,7 +668,7 @@ export default function Products() {
             </CardContent>
           </Card>
         </Grid>
-        <Grid item xs={6} sm={3}>
+        <Grid size={{ xs: 6, sm: 3 }}>
           <Card>
             <CardContent sx={{ p: isMobile ? 1 : 2 }}>
               <Typography variant="h6" color="text.secondary">
@@ -671,8 +685,13 @@ export default function Products() {
       {/* Search and Actions */}
       <Card sx={{ mb: 3 }}>
         <CardContent>
-          <Grid container spacing={2} alignItems="center" justifyContent="right">
-            <Grid item xs={12} md={4}>
+          <Grid
+            container
+            spacing={2}
+            alignItems="center"
+            justifyContent="right"
+          >
+            <Grid size={{ xs: 12, md: 4 }}>
               <TextField
                 fullWidth
                 placeholder="جستجوی محصولات..."
@@ -688,7 +707,7 @@ export default function Products() {
                 size={isMobile ? "small" : "medium"}
               />
             </Grid>
-            <Grid item xs={6} md={3}>
+            <Grid size={{ xs: 12, md: 4 }}>
               <FormControl fullWidth>
                 <Select
                   value={statusFilter}
@@ -702,7 +721,7 @@ export default function Products() {
                 </Select>
               </FormControl>
             </Grid>
-            <Grid item xs={6} md={3}>
+            <Grid size={{ xs: 12, md: 4 }}>
               <FormControl fullWidth>
                 <Select
                   value={categoryFilter}
@@ -719,7 +738,7 @@ export default function Products() {
                 </Select>
               </FormControl>
             </Grid>
-            <Grid item xs={12} md={2}>
+            <Grid size={{ xs: 12, md: 2 }}>
               <Button
                 variant="contained"
                 startIcon={<AddIcon />}
@@ -737,7 +756,7 @@ export default function Products() {
       {/* Products Table */}
       <Card>
         <CardContent sx={{ p: 0 }}>
-          <Box sx={{ width: '100%', overflowX: 'auto' }}>
+          <Box sx={{ width: "100%", overflowX: "auto" }}>
             <DataGrid
               rows={rows}
               columns={getColumns()}
@@ -753,17 +772,17 @@ export default function Products() {
               autoHeight
               density={isMobile ? "compact" : "standard"}
               sx={{
-                '& .MuiDataGrid-root': {
-                  border: 'none',
+                "& .MuiDataGrid-root": {
+                  border: "none",
                 },
-                '& .MuiDataGrid-columnHeaders': {
-                  backgroundColor: 'rgba(0, 0, 0, 0.04)',
+                "& .MuiDataGrid-columnHeaders": {
+                  backgroundColor: "rgba(0, 0, 0, 0.04)",
                 },
-                '& .MuiDataGrid-cell': {
-                  borderBottom: '1px solid rgba(0, 0, 0, 0.05)',
+                "& .MuiDataGrid-cell": {
+                  borderBottom: "1px solid rgba(0, 0, 0, 0.05)",
                 },
-                '& .MuiDataGrid-columnSeparator': {
-                  display: 'none',
+                "& .MuiDataGrid-columnSeparator": {
+                  display: "none",
                 },
               }}
             />
@@ -785,7 +804,7 @@ export default function Products() {
         <form onSubmit={handleSubmit}>
           <DialogContent>
             <Grid container spacing={2} sx={{ mt: 1 }}>
-              <Grid item xs={12} sm={6}>
+              <Grid size={{ xs: 12, sm: 6 }}>
                 <TextField
                   fullWidth
                   label="نام محصول"
@@ -796,7 +815,7 @@ export default function Products() {
                   size={isMobile ? "small" : "medium"}
                 />
               </Grid>
-              <Grid item xs={12} sm={6}>
+              <Grid size={{ xs: 12, sm: 6 }}>
                 <TextField
                   fullWidth
                   label="قیمت"
@@ -809,7 +828,7 @@ export default function Products() {
                   size={isMobile ? "small" : "medium"}
                 />
               </Grid>
-              <Grid item xs={12}>
+              <Grid size={12}>
                 <TextField
                   fullWidth
                   label="توضیحات"
@@ -821,7 +840,7 @@ export default function Products() {
                   size={isMobile ? "small" : "medium"}
                 />
               </Grid>
-              <Grid item xs={12}>
+              <Grid size={12}>
                 <TextField
                   fullWidth
                   label="ترکیبات"
@@ -833,7 +852,7 @@ export default function Products() {
                   size={isMobile ? "small" : "medium"}
                 />
               </Grid>
-              <Grid item xs={12} sm={6}>
+              <Grid size={{ xs: 12, sm: 6 }}>
                 <TextField
                   fullWidth
                   label="تعداد موجودی"
@@ -845,7 +864,7 @@ export default function Products() {
                   size={isMobile ? "small" : "medium"}
                 />
               </Grid>
-              <Grid item xs={12} sm={6}>
+              <Grid size={{ xs: 12, sm: 6 }}>
                 <FormControl fullWidth required>
                   <InputLabel>دسته‌بندی</InputLabel>
                   <Select
@@ -853,7 +872,7 @@ export default function Products() {
                     onChange={(e) =>
                       setFormData((prev) => ({
                         ...prev,
-                        category_id: parseInt(e.target.value) || 0,
+                        category_id: Number(e.target.value) || 0,
                         subcategory_id: 0, // Reset subcategory when category changes
                       }))
                     }
@@ -867,7 +886,7 @@ export default function Products() {
                   </Select>
                 </FormControl>
               </Grid>
-              <Grid item xs={12} sm={6}>
+              <Grid size={{ xs: 12, sm: 6 }}>
                 <FormControl fullWidth required>
                   <InputLabel>زیردسته‌بندی</InputLabel>
                   <Select
@@ -875,10 +894,13 @@ export default function Products() {
                     onChange={(e) =>
                       setFormData((prev) => ({
                         ...prev,
-                        subcategory_id: parseInt(e.target.value) || 0,
+                        subcategory_id: Number(e.target.value) || 0,
                       }))
                     }
-                    disabled={!formData.category_id || categorySubcategories.length === 0}
+                    disabled={
+                      !formData.category_id ||
+                      categorySubcategories.length === 0
+                    }
                     size={isMobile ? "small" : "medium"}
                   >
                     {categorySubcategories.map((subcategory) => (
@@ -889,7 +911,7 @@ export default function Products() {
                   </Select>
                 </FormControl>
               </Grid>
-              <Grid item xs={12} sm={6}>
+              <Grid size={{ xs: 12, sm: 6 }}>
                 <FormControl fullWidth>
                   <InputLabel>وضعیت</InputLabel>
                   <Select
@@ -909,7 +931,7 @@ export default function Products() {
               </Grid>
 
               {/* Image Upload */}
-              <Grid item xs={12}>
+              <Grid size={12}>
                 <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
                   <Button
                     variant="outlined"
@@ -939,7 +961,10 @@ export default function Products() {
             </Grid>
           </DialogContent>
           <DialogActions sx={{ p: 2 }}>
-            <Button onClick={handleCloseDialog} size={isMobile ? "small" : "medium"}>
+            <Button
+              onClick={handleCloseDialog}
+              size={isMobile ? "small" : "medium"}
+            >
               انصراف
             </Button>
             <Button

@@ -4,13 +4,15 @@ import { useTheme } from "@mui/material/styles";
 import { Chip, Box, CircularProgress, Alert, Avatar } from "@mui/material";
 import { useQuery } from "@tanstack/react-query";
 import { getRecentOrders } from "../../../services/dashboardService";
+import type { GridRenderCellParams } from "@mui/x-data-grid";
+import type { GridColDef } from "@mui/x-data-grid";
 
 // Function to get initials from name
 const getInitials = (name: string) => {
   return name
-    .split(' ')
-    .map(word => word.charAt(0))
-    .join('')
+    .split(" ")
+    .map((word) => word.charAt(0))
+    .join("")
     .toUpperCase()
     .substring(0, 2);
 };
@@ -24,7 +26,7 @@ const stringToColor = (string: string) => {
     hash = string.charCodeAt(i) + ((hash << 5) - hash);
   }
 
-  let color = '#';
+  let color = "#";
 
   for (i = 0; i < 3; i += 1) {
     const value = (hash >> (i * 8)) & 0xff;
@@ -36,38 +38,38 @@ const stringToColor = (string: string) => {
 
 const getStatusColor = (status: string) => {
   switch (status) {
-    case 'pending':
-      return 'warning';
-    case 'confirmed':
-      return 'info';
-    case 'preparing':
-      return 'primary';
-    case 'ready':
-      return 'secondary';
-    case 'completed':
-      return 'success';
-    case 'cancelled':
-      return 'error';
+    case "pending":
+      return "warning";
+    case "confirmed":
+      return "info";
+    case "preparing":
+      return "primary";
+    case "ready":
+      return "secondary";
+    case "completed":
+      return "success";
+    case "cancelled":
+      return "error";
     default:
-      return 'default';
+      return "default";
   }
 };
 
 const formatStatus = (status: string) => {
   // Convert status to Persian
   switch (status) {
-    case 'pending':
-      return 'در انتظار';
-    case 'confirmed':
-      return 'تأیید شده';
-    case 'preparing':
-      return 'در حال آماده‌سازی';
-    case 'ready':
-      return 'آماده';
-    case 'completed':
-      return 'تکمیل شده';
-    case 'cancelled':
-      return 'لغو شده';
+    case "pending":
+      return "در انتظار";
+    case "confirmed":
+      return "تأیید شده";
+    case "preparing":
+      return "در حال آماده‌سازی";
+    case "ready":
+      return "آماده";
+    case "completed":
+      return "تکمیل شده";
+    case "cancelled":
+      return "لغو شده";
     default:
       return status.charAt(0).toUpperCase() + status.slice(1);
   }
@@ -75,7 +77,7 @@ const formatStatus = (status: string) => {
 
 export default function CustomizedDataGrid() {
   const theme = useTheme();
-  
+
   const {
     data: recentOrders = [],
     isLoading,
@@ -87,7 +89,14 @@ export default function CustomizedDataGrid() {
 
   if (isLoading) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '400px' }}>
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          height: "400px",
+        }}
+      >
         <CircularProgress />
       </Box>
     );
@@ -110,74 +119,74 @@ export default function CustomizedDataGrid() {
       email: order.customerEmail,
       avatar: {
         name: getInitials(order.customerName),
-        color: stringToColor(order.customerName)
-      }
+        color: stringToColor(order.customerName),
+      },
     },
     date: new Date(order.createdAt).toLocaleDateString(),
     total: order.totalAmount,
     status: order.status,
   }));
 
-  const columns = [
-    { 
-      field: 'orderNumber', 
-      headerName: 'شماره سفارش', 
+  const columns: GridColDef[] = [
+    {
+      field: "orderNumber",
+      headerName: "شماره سفارش",
       flex: 1,
-      minWidth: 150
+      minWidth: 150,
     },
-    { 
-      field: 'customer', 
-      headerName: 'مشتری', 
+    {
+      field: "customer",
+      headerName: "مشتری",
       flex: 1.5,
       minWidth: 200,
-      renderCell: (params) => (
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+      renderCell: (params: GridRenderCellParams) => (
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
           <Avatar
             sx={{
               backgroundColor: params.value.avatar.color,
               width: 32,
               height: 32,
-              fontSize: '0.8rem',
+              fontSize: "0.8rem",
             }}
           >
             {params.value.avatar.name}
           </Avatar>
           <Box>
-            <Box sx={{ fontWeight: 'medium' }}>{params.value.name}</Box>
-            <Box sx={{ fontSize: '0.75rem', color: 'text.secondary' }}>
+            <Box sx={{ fontWeight: "medium" }}>{params.value.name}</Box>
+            <Box sx={{ fontSize: "0.75rem", color: "text.secondary" }}>
               {params.value.email}
             </Box>
           </Box>
         </Box>
-      )
+      ),
     },
-    { 
-      field: 'date', 
-      headerName: 'تاریخ', 
-      flex: 1,
-      minWidth: 120
-    },
-    { 
-      field: 'total', 
-      headerName: 'مجموع', 
-      flex: 1,
-      minWidth: 100,
-      align: 'right',
-      headerAlign: 'right',
-      valueFormatter: (value: number) => `$${value.toFixed(2)}`
-    },
-    { 
-      field: 'status', 
-      headerName: 'وضعیت', 
+    {
+      field: "date",
+      headerName: "تاریخ",
       flex: 1,
       minWidth: 120,
-      renderCell: (params) => (
+    },
+    {
+      field: "total",
+      headerName: "مجموع",
+      flex: 1,
+      minWidth: 100,
+      align: "right",
+      headerAlign: "right",
+      valueFormatter: (value: number) => `$${value.toFixed(2)}`,
+    },
+    {
+      field: "status",
+      headerName: "وضعیت",
+      flex: 1,
+      minWidth: 120,
+      renderCell: (params: GridRenderCellParams) => (
         <Chip
           label={formatStatus(params.value)}
           color={getStatusColor(params.value) as any}
           size="small"
         />
-      )
+      ),
     },
   ];
 
@@ -190,11 +199,11 @@ export default function CustomizedDataGrid() {
         params.indexRelativeToCurrentPage % 2 === 0 ? "even" : "odd"
       }
       initialState={{
-        pagination: { 
-          paginationModel: { pageSize: 10 } 
+        pagination: {
+          paginationModel: { pageSize: 10 },
         },
         sorting: {
-          sortModel: [{ field: 'date', sort: 'desc' }],
+          sortModel: [{ field: "date", sort: "desc" }],
         },
       }}
       pageSizeOptions={[10, 20, 50]}
@@ -202,11 +211,11 @@ export default function CustomizedDataGrid() {
       density="compact"
       sx={{
         border: 0,
-        '& .MuiDataGrid-columnHeaders': {
+        "& .MuiDataGrid-columnHeaders": {
           backgroundColor: theme.palette.grey[50],
         },
-        '& .MuiDataGrid-row': {
-          '&:hover': {
+        "& .MuiDataGrid-row": {
+          "&:hover": {
             backgroundColor: theme.palette.action.hover,
           },
         },
