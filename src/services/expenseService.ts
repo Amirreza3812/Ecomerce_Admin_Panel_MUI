@@ -38,6 +38,7 @@ export interface ExpensesResponse {
 export const getExpenses = async (params?: {
   page?: number;
   limit?: number;
+  type?: "income" | "expense";
   worker_id?: number;
   category?: string;
   payment_method?: string;

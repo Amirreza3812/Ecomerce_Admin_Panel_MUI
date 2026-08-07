@@ -18,12 +18,13 @@ import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
 import { useMutation } from "@tanstack/react-query";
 import { useAuth } from "../../contexes/AuthContext.tsx";
+import { useLicense } from "../../contexes/LicenseContext.tsx";
 import { useNavigate } from "react-router-dom";
 import ForgotPassword from "./components/ForgotPassword.tsx";
 import AppTheme from "../shared-theme/AppTheme.tsx";
 import ColorModeSelect from "../shared-theme/ColorModeSelect.tsx";
-// import { GoogleIcon } from "./components/CustomIcons.tsx";
 import React from "react";
+import { adminLogin } from "../../services/authService";
 
 const Card = styled(MuiCard)(({ theme }) => ({
   display: "flex",
@@ -63,7 +64,6 @@ const SignInContainer = styled(Stack)(({ theme }) => ({
   },
 }));
 
-// yup schema
 const schema = yup.object().shape({
   email: yup.string().email("ایمیل نامعتبر است").required("ایمیل اجباری است"),
   password: yup
@@ -79,9 +79,10 @@ type SignInForm = {
 };
 
 export default function SignIn(props: { disableCustomTheme?: boolean }) {
-  const [open, setOpen] = React.useState(false); // برای ForgotPassword
+  const [open, setOpen] = React.useState(false);
 
   const { login } = useAuth();
+  const { setLicense } = useLicense();
   const navigate = useNavigate();
 
   const {
@@ -95,26 +96,20 @@ export default function SignIn(props: { disableCustomTheme?: boolean }) {
     defaultValues: { email: "", password: "", remember: false },
   });
 
-  // react-query mutation برای لاگین
   const mutation = useMutation({
-    mutationFn: async (data: SignInForm) => {
-      const res = await fetch("http://localhost:3000/api/v1/admin/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: data.email, password: data.password }),
-      });
-      const json = await res.json();
-      if (!res.ok || !json.success) {
-        throw new Error(json.message || "Login failed");
-      }
-      return json.data;
-    },
+    mutationFn: (data: SignInForm) => adminLogin(data.email, data.password),
     onSuccess: (data) => {
+      // data = { token, admin, license }
       login(data.token, data.admin);
-      navigate("/admin/dashboard"); // ریدایرکت به داشبورد
+      if (data.license) {
+        setLicense(data.license);
+      }
+      navigate("/admin/dashboard");
     },
     onError: (error: any) => {
-      setError("password", { message: error.message || "خطا در ورود" });
+      const message =
+        error?.response?.data?.message || error?.message || "خطا در ورود";
+      setError("password", { message });
     },
   });
 
@@ -122,9 +117,6 @@ export default function SignIn(props: { disableCustomTheme?: boolean }) {
     clearErrors();
     mutation.mutate(data);
   };
-
-  const handleClickOpen = () => setOpen(true);
-  const handleClose = () => setOpen(false);
 
   return (
     <AppTheme {...props}>
@@ -185,7 +177,7 @@ export default function SignIn(props: { disableCustomTheme?: boolean }) {
                 render={({ field }) => (
                   <TextField
                     {...field}
-                    error={!!errors.password || !!mutation.error}
+                    error={!!errors.password}
                     helperText={errors.password?.message}
                     name="password"
                     type="password"
@@ -214,7 +206,7 @@ export default function SignIn(props: { disableCustomTheme?: boolean }) {
                 />
               )}
             />
-            <ForgotPassword open={open} handleClose={handleClose} />
+            <ForgotPassword open={open} handleClose={() => setOpen(false)} />
             <Button
               type="submit"
               fullWidth
@@ -226,30 +218,13 @@ export default function SignIn(props: { disableCustomTheme?: boolean }) {
             <Link
               component="button"
               type="button"
-              onClick={handleClickOpen}
+              onClick={() => setOpen(true)}
               variant="body2"
               sx={{ alignSelf: "center" }}
             >
               رمز عبور را فراموش کرده‌اید؟
             </Link>
           </Box>
-          {/* <Divider>یا</Divider>
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-            <Button
-              fullWidth
-              variant="outlined"
-              onClick={() => alert("ورود با گوگل")}
-              startIcon={<GoogleIcon />}
-            >
-              ورود با گوگل
-            </Button>
-            <Typography sx={{ textAlign: "center" }}>
-              حساب ندارید؟{" "}
-              <Link href="/signup" variant="body2" sx={{ alignSelf: "center" }}>
-                ثبت‌نام
-              </Link>
-            </Typography>
-          </Box> */}
         </Card>
       </SignInContainer>
     </AppTheme>

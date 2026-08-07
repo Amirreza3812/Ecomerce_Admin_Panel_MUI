@@ -1,56 +1,32 @@
 import React, { createContext, useContext } from "react";
-import { useQuery } from "@tanstack/react-query";
-
-import { modulesConfig } from "../config/modules";
-
-type Modules = {
-  orders: boolean;
-  categories: boolean;
-  products: boolean;
-  banking: boolean;
-  personnel: boolean;
-  prices: boolean;
-  customers: boolean;
-  comments: boolean;
-  settings: boolean;
-  about: boolean;
-  feedback: boolean;
-  subcategories: boolean;
-  myAccount: boolean;
-};
+import { useLicense } from "./LicenseContext";
+import type { LicenseModules } from "../config/license";
 
 type ModuleContextType = {
-  modules: Modules | undefined;
+  modules: LicenseModules | undefined;
   isLoading: boolean;
   isError: boolean;
 };
 
 const ModuleContext = createContext<ModuleContextType>({
   modules: undefined,
-  isLoading: true,
+  isLoading: false,
   isError: false,
 });
 
 export const useModules = () => useContext(ModuleContext);
 
 export const ModuleProvider = ({ children }: { children: React.ReactNode }) => {
-  const { data, isLoading, isError } = useQuery({
-    queryKey: ["modules"],
-    queryFn: async (): Promise<Modules> => {
-      // This function is now just a placeholder.
-      // It won't be called because we have initialData.
-      // We'll put the real fetch logic here later.
-      return Promise.resolve(modulesConfig);
-    },
-    // --- CHANGE 2: Use the local config as initial data ---
-    // This makes the query resolve instantly with your local data.
-    initialData: modulesConfig,
-    // This prevents the query from trying to refetch on window focus
-    refetchOnWindowFocus: false,
-  });
+  const { modules, license } = useLicense();
 
   return (
-    <ModuleContext.Provider value={{ modules: data, isLoading, isError }}>
+    <ModuleContext.Provider
+      value={{
+        modules: license.expired ? { ...modules, /* all false optional */ } : modules,
+        isLoading: false,
+        isError: false,
+      }}
+    >
       {children}
     </ModuleContext.Provider>
   );

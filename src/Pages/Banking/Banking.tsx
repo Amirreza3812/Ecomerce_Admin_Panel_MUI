@@ -71,6 +71,10 @@ const emptyForm: CreateExpenseData = {
   payment_status: "paid",
 };
 
+const [typeFilter, setTypeFilter] = useState<"all" | "income" | "expense">(
+  "all"
+);
+
 export default function Banking() {
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
@@ -99,6 +103,7 @@ export default function Banking() {
       pageSize,
       categoryFilter,
       paymentStatusFilter,
+      typeFilter,
       fromDate,
       toDate,
       searchTerm,
@@ -110,6 +115,7 @@ export default function Banking() {
         category: categoryFilter === "all" ? undefined : categoryFilter,
         payment_status:
           paymentStatusFilter === "all" ? undefined : paymentStatusFilter,
+        type: typeFilter === "all" ? undefined : typeFilter,
         from: fromDate || undefined,
         to: toDate || undefined,
         search: searchTerm || undefined,
@@ -262,6 +268,7 @@ export default function Banking() {
 
   const rows = (data?.expenses || []).map((e) => ({
     id: e.id,
+    type: e.type || "expense",
     date: e.expense_date
       ? new Date(e.expense_date).toLocaleDateString("fa-IR")
       : "—",
@@ -355,6 +362,18 @@ export default function Banking() {
         </Box>
       ),
     },
+    {
+      field: "type",
+      headerName: "نوع",
+      width: 100,
+      renderCell: (p: GridRenderCellParams) => (
+        <Chip
+          size="small"
+          label={p.value === "income" ? "درآمد" : "هزینه"}
+          color={p.value === "income" ? "success" : "default"}
+        />
+      ),
+    },
   ];
 
   if (isLoading) {
@@ -431,6 +450,21 @@ export default function Banking() {
               </Typography>
             </CardContent>
           </Card>
+        </Grid>
+        <Grid size={{ xs: 6, md: 2 }}>
+          <FormControl fullWidth>
+            <Select
+              value={typeFilter}
+              onChange={(e) => {
+                setTypeFilter(e.target.value as "all" | "income" | "expense");
+                setPage(0);
+              }}
+            >
+              <MenuItem value="all">همه تراکنش‌ها</MenuItem>
+              <MenuItem value="income">درآمد (فروش)</MenuItem>
+              <MenuItem value="expense">هزینه</MenuItem>
+            </Select>
+          </FormControl>
         </Grid>
         <Grid size={{ xs: 6, md: 2 }}>
           <Card>

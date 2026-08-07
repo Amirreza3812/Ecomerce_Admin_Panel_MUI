@@ -1,6 +1,5 @@
-// src/Pages/Orders/Orders.tsx
 import { useState } from "react";
-import type { GridRenderCellParams } from "@mui/x-data-grid";
+import type { GridColDef, GridRenderCellParams } from "@mui/x-data-grid";
 import {
   Box,
   Grid,
@@ -16,23 +15,36 @@ import {
   Select,
   FormControl,
   Chip,
+  IconButton,
+  Snackbar,
+  Alert,
 } from "@mui/material";
-import { Search as SearchIcon } from "@mui/icons-material";
-import { useQuery } from "@tanstack/react-query";
+import {
+  Search as SearchIcon,
+  CheckCircle as CheckCircleIcon,
+} from "@mui/icons-material";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { DataGrid } from "@mui/x-data-grid";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import type { Dayjs } from "dayjs";
 import OrderStatusChart from "../Dashboard/components/OrderStatusChart";
 import PageViewsBarChart from "../Dashboard/components/PageViewsBarChart";
+import { getRecentOrders } from "../../services/dashboardService";
 import {
-  getRecentOrders,
-  getOrderStatusDistribution,
-  getSalesChart,
-} from "../../services/dashboardService";
-import type { Dayjs } from "dayjs";
+  updateOrderStatus,
+  updateOrderPayment,
+  type OrderStatus,
+} from "../../services/orderService";
+import {
+  STATUS_LABELS,
+  PAYMENT_STATUS_LABELS,
+  PAYMENT_METHOD_LABELS,
+} from "../../utils/orderLabels";
 
 export default function Orders() {
+  const queryClient = useQueryClient();
   const [tabValue, setTabValue] = useState(0);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -40,98 +52,203 @@ export default function Orders() {
     start: Dayjs | null;
     end: Dayjs | null;
   }>({ start: null, end: null });
+  const [snackbar, setSnackbar] = useState({
+    open: false,
+    message: "",
+    severity: "success" as "success" | "error",
+  });
 
-  const {
-    data: recentOrders = [],
-    isLoading: isOrdersLoading,
-    error: ordersError,
-  } = useQuery({
+  const { data: recentOrders = [], isLoading } = useQuery({
     queryKey: ["recentOrders"],
     queryFn: () => getRecentOrders(50),
   });
 
-  const { data: statusData = {}, isLoading: isStatusLoading } = useQuery({
-    queryKey: ["orderStatusDistribution"],
-    queryFn: () => getOrderStatusDistribution("month"),
+  const statusMut = useMutation({
+    mutationFn: ({ id, status }: { id: number; status: OrderStatus }) =>
+      updateOrderStatus(id, status),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["recentOrders"] });
+      setSnackbar({
+        open: true,
+        message: "وضعیت سفارش به‌روز شد",
+        severity: "success",
+      });
+    },
+    onError: (err: any) =>
+      setSnackbar({
+        open: true,
+        message: err?.response?.data?.message || "خطا در به‌روزرسانی وضعیت",
+        severity: "error",
+      }),
   });
 
-  const { data: salesData, isLoading: isSalesLoading } = useQuery({
-    queryKey: ["salesChart"],
-    queryFn: () => getSalesChart("month"),
+  const paymentMut = useMutation({
+    mutationFn: ({
+      id,
+      payment_status,
+      payment_method,
+    }: {
+      id: number;
+      payment_status?: "paid" | "pending";
+      payment_method?: string;
+    }) =>
+      updateOrderPayment(id, {
+        payment_status,
+        payment_method: payment_method as any,
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["recentOrders"] });
+      queryClient.invalidateQueries({ queryKey: ["expenses"] }); // banking income
+      queryClient.invalidateQueries({ queryKey: ["expenseStats"] });
+      setSnackbar({
+        open: true,
+        message: "پرداخت ثبت شد (درآمد در حسابداری)",
+        severity: "success",
+      });
+    },
+    onError: (err: any) =>
+      setSnackbar({
+        open: true,
+        message: err?.response?.data?.message || "خطا در ثبت پرداخت",
+        severity: "error",
+      }),
   });
 
-  const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
-    setTabValue(newValue);
-  };
-
-  // Filter orders based on search and status
-  const filteredOrders = recentOrders.filter((order) => {
+  const filteredOrders = recentOrders.filter((order: any) => {
+    const name = (
+      order.customerName ||
+      order.customer_name ||
+      ""
+    ).toLowerCase();
+    const num = (order.orderNumber || order.order_number || "").toLowerCase();
     const matchesSearch =
-      order.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      order.orderNumber.toLowerCase().includes(searchTerm.toLowerCase());
+      name.includes(searchTerm.toLowerCase()) ||
+      num.includes(searchTerm.toLowerCase());
     const matchesStatus =
       statusFilter === "all" || order.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
 
-  // Transform data for DataGrid
-  const rows = filteredOrders.map((order) => ({
+  const rows = filteredOrders.map((order: any) => ({
     id: order.id,
-    orderNumber: order.orderNumber,
-    customerName: order.customerName,
-    customerEmail: order.customerEmail,
-    totalAmount: order.totalAmount,
+    orderNumber: order.orderNumber || order.order_number,
+    customerName: order.customerName || order.customer_name || "—",
+    totalAmount: Number(order.totalAmount ?? order.final_amount ?? 0),
     status: order.status,
-    createdAt: new Date(order.createdAt).toLocaleDateString(),
+    payment_status: order.payment_status || order.paymentStatus || "pending",
+    payment_method: order.payment_method || order.paymentMethod || null,
+    createdAt: new Date(order.createdAt).toLocaleDateString("fa-IR"),
+    raw: order,
   }));
 
-  const columns = [
-    { field: "orderNumber", headerName: "Order #", width: 130 },
-    { field: "customerName", headerName: "Customer", width: 150 },
+  const columns: GridColDef[] = [
+    { field: "orderNumber", headerName: "شماره سفارش", width: 130 },
+    { field: "customerName", headerName: "مشتری", width: 140 },
     {
       field: "totalAmount",
-      headerName: "Total",
-      width: 100,
-      valueFormatter: (value: number) => `$${value.toFixed(2)}`,
+      headerName: "مبلغ",
+      width: 110,
+      valueFormatter: (v: number) =>
+        v != null ? Number(v).toLocaleString("fa-IR") : "—",
     },
     {
       field: "status",
-      headerName: "Status",
-      width: 120,
-      renderCell: (params: GridRenderCellParams) => (
+      headerName: "وضعیت",
+      width: 130,
+      renderCell: (p: GridRenderCellParams) => (
         <Chip
-          label={params.value}
+          label={STATUS_LABELS[p.value as string] || p.value}
+          size="small"
           color={
-            params.value === "completed"
+            p.value === "completed"
               ? "success"
-              : params.value === "cancelled"
+              : p.value === "cancelled"
               ? "error"
-              : params.value === "preparing"
+              : p.value === "preparing"
               ? "warning"
               : "info"
           }
-          size="small"
         />
       ),
     },
-    { field: "createdAt", headerName: "Date", width: 120 },
+    {
+      field: "payment_status",
+      headerName: "پرداخت",
+      width: 120,
+      renderCell: (p: GridRenderCellParams) => (
+        <Chip
+          label={PAYMENT_STATUS_LABELS[p.value as string] || p.value}
+          size="small"
+          color={p.value === "paid" ? "success" : "warning"}
+        />
+      ),
+    },
+    {
+      field: "payment_method",
+      headerName: "روش",
+      width: 100,
+      valueFormatter: (v: string) => (v ? PAYMENT_METHOD_LABELS[v] || v : "—"),
+    },
+    { field: "createdAt", headerName: "تاریخ", width: 110 },
+    {
+      field: "actions",
+      headerName: "عملیات",
+      width: 200,
+      sortable: false,
+      renderCell: (p: GridRenderCellParams) => (
+        <Box sx={{ display: "flex", gap: 0.5, alignItems: "center" }}>
+          <FormControl size="small" sx={{ minWidth: 110 }}>
+            <Select
+              value={p.row.status}
+              onChange={(e) =>
+                statusMut.mutate({
+                  id: p.row.id,
+                  status: e.target.value as OrderStatus,
+                })
+              }
+            >
+              {Object.entries(STATUS_LABELS).map(([value, label]) => (
+                <MenuItem key={value} value={value}>
+                  {label}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          {p.row.payment_status !== "paid" && (
+            <IconButton
+              size="small"
+              color="success"
+              title="ثبت پرداخت"
+              onClick={() =>
+                paymentMut.mutate({
+                  id: p.row.id,
+                  payment_status: "paid",
+                  payment_method: p.row.payment_method || "cash",
+                })
+              }
+            >
+              <CheckCircleIcon fontSize="small" />
+            </IconButton>
+          )}
+        </Box>
+      ),
+    },
   ];
 
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs}>
-      <Box sx={{ p: 3 }}>
+      <Box sx={{ p: 3, maxWidth: "100%", overflowX: "hidden" }}>
         <Typography variant="h4" gutterBottom>
-          Orders Management
+          مدیریت سفارش‌ها
         </Typography>
 
-        {/* Filters */}
         <Card sx={{ mb: 3 }}>
           <CardContent>
             <Grid container spacing={2} alignItems="center">
               <Grid size={{ xs: 12, md: 3 }}>
                 <TextField
                   fullWidth
-                  placeholder="Search orders..."
+                  placeholder="جستجوی سفارش یا مشتری..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   InputProps={{
@@ -149,66 +266,60 @@ export default function Orders() {
                     value={statusFilter}
                     onChange={(e) => setStatusFilter(e.target.value)}
                   >
-                    <MenuItem value="all">All Status</MenuItem>
-                    <MenuItem value="pending">Pending</MenuItem>
-                    <MenuItem value="confirmed">Confirmed</MenuItem>
-                    <MenuItem value="preparing">Preparing</MenuItem>
-                    <MenuItem value="ready">Ready</MenuItem>
-                    <MenuItem value="completed">Completed</MenuItem>
-                    <MenuItem value="cancelled">Cancelled</MenuItem>
+                    <MenuItem value="all">همه وضعیت‌ها</MenuItem>
+                    {Object.entries(STATUS_LABELS).map(([value, label]) => (
+                      <MenuItem key={value} value={value}>
+                        {label}
+                      </MenuItem>
+                    ))}
                   </Select>
                 </FormControl>
               </Grid>
               <Grid size={{ xs: 12, md: 2 }}>
                 <DatePicker
-                  label="Start Date"
+                  label="از تاریخ"
                   value={dateRange.start}
-                  onChange={(newValue) =>
-                    setDateRange((prev) => ({ ...prev, start: newValue }))
+                  onChange={(v) =>
+                    setDateRange((prev) => ({ ...prev, start: v }))
                   }
                   slotProps={{ textField: { fullWidth: true } }}
                 />
               </Grid>
               <Grid size={{ xs: 12, md: 2 }}>
                 <DatePicker
-                  label="End Date"
+                  label="تا تاریخ"
                   value={dateRange.end}
-                  onChange={(newValue) =>
-                    setDateRange((prev) => ({ ...prev, end: newValue }))
+                  onChange={(v) =>
+                    setDateRange((prev) => ({ ...prev, end: v }))
                   }
                   slotProps={{ textField: { fullWidth: true } }}
                 />
               </Grid>
               <Grid size={{ xs: 12, md: 3 }}>
                 <Button variant="contained" fullWidth>
-                  Apply Filters
+                  اعمال فیلتر
                 </Button>
               </Grid>
             </Grid>
           </CardContent>
         </Card>
 
-        {/* Tabs */}
         <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 2 }}>
-          <Tabs value={tabValue} onChange={handleTabChange}>
-            <Tab label="Orders List" />
-            <Tab label="Analytics" />
+          <Tabs value={tabValue} onChange={(_, v) => setTabValue(v)}>
+            <Tab label="لیست سفارش‌ها" />
+            <Tab label="آمار" />
           </Tabs>
         </Box>
 
-        {/* Tab Content */}
         {tabValue === 0 && (
           <Card>
             <CardContent sx={{ p: 0 }}>
               <DataGrid
                 rows={rows}
                 columns={columns}
+                loading={isLoading}
                 initialState={{
-                  pagination: {
-                    paginationModel: {
-                      pageSize: 10,
-                    },
-                  },
+                  pagination: { paginationModel: { pageSize: 10 } },
                 }}
                 pageSizeOptions={[5, 10, 25]}
                 disableRowSelectionOnClick
@@ -228,6 +339,14 @@ export default function Orders() {
             </Grid>
           </Grid>
         )}
+
+        <Snackbar
+          open={snackbar.open}
+          autoHideDuration={4000}
+          onClose={() => setSnackbar((s) => ({ ...s, open: false }))}
+        >
+          <Alert severity={snackbar.severity}>{snackbar.message}</Alert>
+        </Snackbar>
       </Box>
     </LocalizationProvider>
   );

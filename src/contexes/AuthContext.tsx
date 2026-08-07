@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState } from "react";
+import { useLicense } from "./LicenseContext";
 
 type Admin = {
   id: number;
@@ -17,7 +18,7 @@ type AuthContextType = {
   admin: Admin | null;
   token: string | null;
   loading: boolean;
-  login: (token: string, admin: Admin) => void;
+  login: (token: string, admin: Admin, license?: unknown) => void;
   logout: () => void;
 };
 
@@ -36,7 +37,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const login = (jwt: string, adminObj: Admin) => {
+  const login = (jwt: string, adminObj: Admin, license?: unknown) => {
     setToken(jwt);
     setAdmin(adminObj);
     localStorage.setItem("token", jwt);
@@ -45,15 +46,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     } else {
       localStorage.removeItem("admin");
     }
+    if (license) {
+      localStorage.setItem("app_license", JSON.stringify(license));
+    }
   };
-
   const logout = () => {
     setToken(null);
     setAdmin(null);
     localStorage.removeItem("token");
     localStorage.removeItem("admin");
+    localStorage.removeItem("app_license");
   };
-
   React.useEffect(() => {
     const jwt = localStorage.getItem("token");
     const adm = localStorage.getItem("admin");
