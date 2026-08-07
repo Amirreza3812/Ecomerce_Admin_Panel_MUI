@@ -2,3 +2,9 @@ body {
   min-height: 100vh;
   min-width: 100vw;
 }
+body::-webkit-scrollbar{
+  display: none;
+}
+.sidebar::-webkit-scrollbar{
+  display: none;
+}

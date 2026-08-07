@@ -33,13 +33,14 @@ export default function SideMenu() {
     <Drawer
       variant="permanent"
       sx={{
-        display: { xs: "none", md: "block" },
+        display: { xs: "none", md: "block", scrollbarWidth: "0" },
         [`& .${drawerClasses.paper}`]: {
           backgroundColor: "background.paper",
         },
       }}
     >
       <Box
+        className="sidebar"
         sx={{
           overflow: "auto",
           height: "100%",

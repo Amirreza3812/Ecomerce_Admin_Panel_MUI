@@ -50,7 +50,7 @@ import {
   getCustomerAnalytics,
   updateCustomerStatus,
   deleteCustomer,
-  sendCustomerSms,
+  sendBulkCustomerSms,
   type Customer,
   type CustomerProfile,
 } from "../../services/customerService";
@@ -71,7 +71,7 @@ export default function Customer() {
 
   const [smsOpen, setSmsOpen] = useState(false);
   const [smsMessage, setSmsMessage] = useState("");
- 
+
   const [snackbar, setSnackbar] = useState({
     open: false,
     message: "",
@@ -149,26 +149,32 @@ export default function Customer() {
     },
   });
 
- // Customer.tsx
-const smsMutation = useMutation({
-  mutationFn: (message: string) => sendBulkCustomerSms(message),
-  onSuccess: (data) => {
-    setSmsOpen(false);
-    setSmsMessage("");
-    setSnackbar({
-      open: true,
-      message: data.message || `پیام به ${data.sent ?? 0} مشتری ارسال شد`,
-      severity: "success",
-    });
-  },
-  onError: (err: any) => {
-    setSnackbar({
-      open: true,
-      message: err.response?.data?.message || "خطا در ارسال پیامک گروهی",
-      severity: "error",
-    });
-  },
-});
+  // Customer.tsx
+  const smsMutation = useMutation({
+    mutationFn: (message: string) => sendBulkCustomerSms(message),
+    onSuccess: (data: {
+      success?: boolean;
+      message?: string;
+      sent?: number;
+      skipped?: number;
+      status?: string;
+    }) => {
+      setSmsOpen(false);
+      setSmsMessage("");
+      setSnackbar({
+        open: true,
+        message: data.message || `پیام به ${data.sent ?? 0} مشتری ارسال شد`,
+        severity: "success",
+      });
+    },
+    onError: (err: any) => {
+      setSnackbar({
+        open: true,
+        message: err.response?.data?.message || "خطا در ارسال پیامک گروهی",
+        severity: "error",
+      });
+    },
+  });
 
   const openDetail = (id: number) => {
     setSelectedId(id);
