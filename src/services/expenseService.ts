@@ -1,5 +1,12 @@
 import apiClient from "./api";
 
+export type ExpensePaymentMethod =
+  | "cash"
+  | "card"
+  | "bank"
+  | "worker_paid"
+  | "online";
+
 export interface Expense {
   id: number;
   worker_id?: number | null;
@@ -7,10 +14,13 @@ export interface Expense {
   category: string;
   description?: string | null;
   expense_date: string;
-  payment_method: "cash" | "card" | "bank" | "worker_paid";
+  payment_method: ExpensePaymentMethod;
   payment_status: "paid" | "unpaid";
   receipt_url?: string | null;
+  type?: "income" | "expense"; // ← add
+  order_id?: number | null; // ← add
   worker?: { id: number; name: string; job_title?: string } | null;
+  order?: { id: number; order_number?: string } | null;
   createdAt?: string;
 }
 
@@ -20,7 +30,7 @@ export interface CreateExpenseData {
   category: string;
   description?: string;
   expense_date: string;
-  payment_method?: "cash" | "card" | "bank" | "worker_paid";
+  payment_method?: ExpensePaymentMethod;
   payment_status?: "paid" | "unpaid";
   receipt?: File | null; // for FormData
 }

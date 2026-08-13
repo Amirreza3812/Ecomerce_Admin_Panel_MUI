@@ -31,11 +31,12 @@ import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import type { Dayjs } from "dayjs";
 import OrderStatusChart from "../Dashboard/components/OrderStatusChart";
 import PageViewsBarChart from "../Dashboard/components/PageViewsBarChart";
-import { getRecentOrders } from "../../services/dashboardService";
 import {
+  getOrders,
   updateOrderStatus,
   updateOrderPayment,
   type OrderStatus,
+  type PaymentMethod,
 } from "../../services/orderService";
 import {
   STATUS_LABELS,
@@ -48,6 +49,8 @@ export default function Orders() {
   const [tabValue, setTabValue] = useState(0);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [page, setPage] = useState(0);
+  const [pageSize, setPageSize] = useState(10);
   const [dateRange, setDateRange] = useState<{
     start: Dayjs | null;
     end: Dayjs | null;
@@ -58,16 +61,22 @@ export default function Orders() {
     severity: "success" as "success" | "error",
   });
 
-  const { data: recentOrders = [], isLoading } = useQuery({
-    queryKey: ["recentOrders"],
-    queryFn: () => getRecentOrders(50),
+  const { data, isLoading, error } = useQuery({
+    queryKey: ["orders", page, pageSize, statusFilter, searchTerm],
+    queryFn: () =>
+      getOrders({
+        page: page + 1,
+        limit: pageSize,
+        status: statusFilter === "all" ? undefined : statusFilter,
+        search: searchTerm || undefined,
+      }),
   });
 
   const statusMut = useMutation({
     mutationFn: ({ id, status }: { id: number; status: OrderStatus }) =>
       updateOrderStatus(id, status),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["recentOrders"] });
+      queryClient.invalidateQueries({ queryKey: ["orders"] });
       setSnackbar({
         open: true,
         message: "وضعیت سفارش به‌روز شد",
@@ -90,19 +99,19 @@ export default function Orders() {
     }: {
       id: number;
       payment_status?: "paid" | "pending";
-      payment_method?: string;
+      payment_method?: PaymentMethod;
     }) =>
       updateOrderPayment(id, {
         payment_status,
-        payment_method: payment_method as any,
+        payment_method,
       }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["recentOrders"] });
-      queryClient.invalidateQueries({ queryKey: ["expenses"] }); // banking income
+      queryClient.invalidateQueries({ queryKey: ["orders"] });
+      queryClient.invalidateQueries({ queryKey: ["expenses"] });
       queryClient.invalidateQueries({ queryKey: ["expenseStats"] });
       setSnackbar({
         open: true,
-        message: "پرداخت ثبت شد (درآمد در حسابداری)",
+        message: "پرداخت ثبت شد (درآمد + باشگاه مشتریان)",
         severity: "success",
       });
     },
@@ -114,35 +123,23 @@ export default function Orders() {
       }),
   });
 
-  const filteredOrders = recentOrders.filter((order: any) => {
-    const name = (
-      order.customerName ||
-      order.customer_name ||
-      ""
-    ).toLowerCase();
-    const num = (order.orderNumber || order.order_number || "").toLowerCase();
-    const matchesSearch =
-      name.includes(searchTerm.toLowerCase()) ||
-      num.includes(searchTerm.toLowerCase());
-    const matchesStatus =
-      statusFilter === "all" || order.status === statusFilter;
-    return matchesSearch && matchesStatus;
-  });
+  const orders = data?.orders || [];
 
-  const rows = filteredOrders.map((order: any) => ({
+  const rows = orders.map((order) => ({
     id: order.id,
-    orderNumber: order.orderNumber || order.order_number,
+    orderNumber: order.orderNumber || order.order_number || "—",
     customerName: order.customerName || order.customer_name || "—",
     totalAmount: Number(order.totalAmount ?? order.final_amount ?? 0),
     status: order.status,
-    payment_status: order.payment_status || order.paymentStatus || "pending",
-    payment_method: order.payment_method || order.paymentMethod || null,
-    createdAt: new Date(order.createdAt).toLocaleDateString("fa-IR"),
-    raw: order,
+    payment_status: order.payment_status || "pending",
+    payment_method: order.payment_method || null,
+    createdAt: order.createdAt
+      ? new Date(order.createdAt).toLocaleDateString("fa-IR")
+      : "—",
   }));
 
   const columns: GridColDef[] = [
-    { field: "orderNumber", headerName: "شماره سفارش", width: 130 },
+    { field: "orderNumber", headerName: "شماره سفارش", width: 140 },
     { field: "customerName", headerName: "مشتری", width: 140 },
     {
       field: "totalAmount",
@@ -193,11 +190,11 @@ export default function Orders() {
     {
       field: "actions",
       headerName: "عملیات",
-      width: 200,
+      width: 220,
       sortable: false,
       renderCell: (p: GridRenderCellParams) => (
         <Box sx={{ display: "flex", gap: 0.5, alignItems: "center" }}>
-          <FormControl size="small" sx={{ minWidth: 110 }}>
+          <FormControl size="small" sx={{ minWidth: 120 }}>
             <Select
               value={p.row.status}
               onChange={(e) =>
@@ -207,9 +204,9 @@ export default function Orders() {
                 })
               }
             >
-              {Object.entries(STATUS_LABELS).map(([value, label]) => (
+              {(Object.keys(STATUS_LABELS) as OrderStatus[]).map((value) => (
                 <MenuItem key={value} value={value}>
-                  {label}
+                  {STATUS_LABELS[value]}
                 </MenuItem>
               ))}
             </Select>
@@ -223,7 +220,8 @@ export default function Orders() {
                 paymentMut.mutate({
                   id: p.row.id,
                   payment_status: "paid",
-                  payment_method: p.row.payment_method || "cash",
+                  payment_method:
+                    (p.row.payment_method as PaymentMethod) || "cash",
                 })
               }
             >
@@ -250,7 +248,10 @@ export default function Orders() {
                   fullWidth
                   placeholder="جستجوی سفارش یا مشتری..."
                   value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
+                  onChange={(e) => {
+                    setSearchTerm(e.target.value);
+                    setPage(0);
+                  }}
                   InputProps={{
                     startAdornment: (
                       <InputAdornment position="start">
@@ -264,14 +265,19 @@ export default function Orders() {
                 <FormControl fullWidth>
                   <Select
                     value={statusFilter}
-                    onChange={(e) => setStatusFilter(e.target.value)}
+                    onChange={(e) => {
+                      setStatusFilter(e.target.value);
+                      setPage(0);
+                    }}
                   >
                     <MenuItem value="all">همه وضعیت‌ها</MenuItem>
-                    {Object.entries(STATUS_LABELS).map(([value, label]) => (
-                      <MenuItem key={value} value={value}>
-                        {label}
-                      </MenuItem>
-                    ))}
+                    {(Object.keys(STATUS_LABELS) as OrderStatus[]).map(
+                      (value) => (
+                        <MenuItem key={value} value={value}>
+                          {STATUS_LABELS[value]}
+                        </MenuItem>
+                      )
+                    )}
                   </Select>
                 </FormControl>
               </Grid>
@@ -314,17 +320,27 @@ export default function Orders() {
         {tabValue === 0 && (
           <Card>
             <CardContent sx={{ p: 0 }}>
-              <DataGrid
-                rows={rows}
-                columns={columns}
-                loading={isLoading}
-                initialState={{
-                  pagination: { paginationModel: { pageSize: 10 } },
-                }}
-                pageSizeOptions={[5, 10, 25]}
-                disableRowSelectionOnClick
-                autoHeight
-              />
+              {error ? (
+                <Alert severity="error" sx={{ m: 2 }}>
+                  خطا در بارگذاری سفارش‌ها — آیا GET /admin/orders فعال است؟
+                </Alert>
+              ) : (
+                <DataGrid
+                  rows={rows}
+                  columns={columns}
+                  loading={isLoading}
+                  rowCount={data?.pagination?.total ?? rows.length}
+                  paginationMode={data?.pagination ? "server" : "client"}
+                  paginationModel={{ page, pageSize }}
+                  onPaginationModelChange={(m) => {
+                    setPage(m.page);
+                    setPageSize(m.pageSize);
+                  }}
+                  pageSizeOptions={[5, 10, 25]}
+                  disableRowSelectionOnClick
+                  autoHeight
+                />
+              )}
             </CardContent>
           </Card>
         )}

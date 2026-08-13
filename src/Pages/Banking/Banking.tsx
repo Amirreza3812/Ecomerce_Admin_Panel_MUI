@@ -59,6 +59,7 @@ const METHODS = [
   { value: "card", label: "کارت" },
   { value: "bank", label: "بانک" },
   { value: "worker_paid", label: "پرداخت توسط کارمند" },
+  { value: "online", label: "آنلاین" },
 ];
 
 const emptyForm: CreateExpenseData = {
@@ -71,16 +72,15 @@ const emptyForm: CreateExpenseData = {
   payment_status: "paid",
 };
 
-const [typeFilter, setTypeFilter] = useState<"all" | "income" | "expense">(
-  "all"
-);
-
 export default function Banking() {
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(10);
+  const [typeFilter, setTypeFilter] = useState<"all" | "income" | "expense">(
+    "all"
+  );
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Expense | null>(null);
   const [form, setForm] = useState<CreateExpenseData>(emptyForm);

@@ -22,6 +22,7 @@ import KeyboardDoubleArrowDownIcon from "@mui/icons-material/KeyboardDoubleArrow
 import AccountBalanceIcon from "@mui/icons-material/AccountBalance";
 import { NavLink } from "react-router-dom";
 import { useModules } from "../../../contexes/ModuleContext.tsx";
+import { useMenu } from "../../../contexes/MenuContext.tsx";
 
 // UPDATED PATHS: Added /admin prefix to all paths
 const mainListItems = [
@@ -112,15 +113,17 @@ const secondaryListItems = [
 
 export default function MenuContent() {
   const { modules } = useModules();
+  const { menuItems, isLoading } = useMenu();
 
   return (
     <Stack sx={{ flexGrow: 1, p: 1, justifyContent: "space-between" }}>
       <List dense>
-        {mainListItems.map((item) => {
+        {menuItems.map((item) => {
           const isDisabled =
             item.key === "home"
               ? false
-              : !(modules && modules[item.key as keyof typeof modules]);
+              : !(modules && modules[item.module as keyof typeof modules]);
+       
 
           const buttonSx = {
             "&.active": {
@@ -164,7 +167,7 @@ export default function MenuContent() {
         })}
       </List>
 
-      <List dense>
+      {/* <List dense>
         {secondaryListItems.map((item) => {
           const isDisabled = !(
             modules && modules[item.key as keyof typeof modules]
@@ -209,7 +212,7 @@ export default function MenuContent() {
             </ListItem>
           );
         })}
-      </List>
+      </List> */}
     </Stack>
   );
 }

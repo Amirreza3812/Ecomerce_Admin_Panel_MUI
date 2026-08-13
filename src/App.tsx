@@ -23,6 +23,8 @@ import MainGrid from "./Pages/Dashboard/components/MainGrid.tsx";
 import SubCategories from "./Pages/SubCategories/SubCategories.tsx";
 import MyAccount from "./Pages/MyAccount/MyAccount.tsx";
 import { LicenseProvider } from "./contexes/LicenseContext.tsx";
+import { StaffRoleProvider } from "./contexes/StaffRoleContext";
+import { MenuProvider } from "./contexes/MenuContext";
 
 const DashboardIndex = () => <MainGrid />;
 const queryClient = new QueryClient();
@@ -100,13 +102,30 @@ function AppRoutes() {
 
 function App() {
   return (
+    // <QueryClientProvider client={queryClient}>
+    //   <LicenseProvider>
+    //     <AuthProvider>
+    //       <ModuleProvider>
+    //         <BrowserRouter>
+    //           <AppRoutes />
+    //         </BrowserRouter>
+    //       </ModuleProvider>
+    //     </AuthProvider>
+    //   </LicenseProvider>
+    // </QueryClientProvider>
+
+    // New Version
     <QueryClientProvider client={queryClient}>
       <LicenseProvider>
         <AuthProvider>
           <ModuleProvider>
-            <BrowserRouter>
-              <AppRoutes />
-            </BrowserRouter>
+            <StaffRoleProvider>
+              <MenuProvider>
+                <BrowserRouter>
+                  <AppRoutes />
+                </BrowserRouter>
+              </MenuProvider>
+            </StaffRoleProvider>
           </ModuleProvider>
         </AuthProvider>
       </LicenseProvider>

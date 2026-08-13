@@ -1,14 +1,16 @@
-import React, { createContext, useContext, useState } from "react";
+import React, { createContext, useContext, useState, useEffect } from "react";
 import { useLicense } from "./LicenseContext";
 
 type Admin = {
   id: number;
   name: string;
   email: string;
-  phone?: string;
+  phone?: string | null;
   role: string;
   status: string;
   avatar?: string | null;
+  staff_role?: string | null;
+  permissions?: string[] | null;
   lastLogin?: string;
   createdAt?: string;
   updatedAt?: string;
@@ -33,6 +35,7 @@ const AuthContext = createContext<AuthContextType>({
 export const useAuth = () => useContext(AuthContext);
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
+  const { setLicense } = useLicense();
   const [admin, setAdmin] = useState<Admin | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -40,29 +43,32 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const login = (jwt: string, adminObj: Admin, license?: unknown) => {
     setToken(jwt);
     setAdmin(adminObj);
+
     localStorage.setItem("token", jwt);
-    if (adminObj) {
-      localStorage.setItem("admin", JSON.stringify(adminObj));
-    } else {
-      localStorage.removeItem("admin");
-    }
+    localStorage.setItem("admin", JSON.stringify(adminObj));
+
     if (license) {
       localStorage.setItem("app_license", JSON.stringify(license));
+      setLicense(license); // Save license to LicenseContext
     }
   };
+
   const logout = () => {
     setToken(null);
     setAdmin(null);
     localStorage.removeItem("token");
     localStorage.removeItem("admin");
     localStorage.removeItem("app_license");
+    setLicense(null);
   };
-  React.useEffect(() => {
-    const jwt = localStorage.getItem("token");
-    const adm = localStorage.getItem("admin");
-    if (jwt && adm && adm !== "undefined") {
-      setToken(jwt);
-      setAdmin(JSON.parse(adm));
+
+  useEffect(() => {
+    const storedToken = localStorage.getItem("token");
+    const storedAdmin = localStorage.getItem("admin");
+
+    if (storedToken && storedAdmin && storedAdmin !== "undefined") {
+      setToken(storedToken);
+      setAdmin(JSON.parse(storedAdmin));
     } else {
       setToken(null);
       setAdmin(null);
